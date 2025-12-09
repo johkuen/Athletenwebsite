@@ -3,7 +3,6 @@ let user = null;
 let wettkaempfe = [];
 let editingResultId = null;
 
-// Automatisch richtige Domain wählen (lokal & online)
 const API_BASE_URL = window.location.origin;
 const IMAGE_BASE_URL = window.location.origin;
 
@@ -28,10 +27,50 @@ async function login() {
     fillDashboardResults();
     fillDashboardChart();
     fillDashboardProfile();
+  } else if (data.setPassword) {
+    // Passwort muss gesetzt werden
+    showSetPasswordForm(email);
   } else {
     document.getElementById('login-error').innerText = data.error || 'Login fehlgeschlagen';
   }
 }
+
+// Zeige Formular zum Passwort setzen
+function showSetPasswordForm(email) {
+  document.getElementById('login-section').style.display = 'none';
+  document.getElementById('set-password-section').style.display = 'flex';
+  document.getElementById('set-password-email').value = email;
+  document.getElementById('set-password-error').innerText = '';
+}
+
+// Passwort setzen
+async function setPassword() {
+  const email = document.getElementById('set-password-email').value;
+  const password = document.getElementById('set-password-password').value;
+  const password2 = document.getElementById('set-password-password2').value;
+  if (!password || password.length < 6) {
+    document.getElementById('set-password-error').innerText = 'Passwort muss mindestens 6 Zeichen haben!';
+    return;
+  }
+  if (password !== password2) {
+    document.getElementById('set-password-error').innerText = 'Passwörter stimmen nicht überein!';
+    return;
+  }
+  const res = await fetch(`${API_BASE_URL}/api/set-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password })
+  });
+  const data = await res.json();
+  if (res.ok) {
+    document.getElementById('set-password-section').style.display = 'none';
+    document.getElementById('login-section').style.display = 'flex';
+    document.getElementById('login-error').innerText = 'Passwort gesetzt, bitte einloggen!';
+  } else {
+    document.getElementById('set-password-error').innerText = data.error || 'Fehler beim Setzen des Passworts';
+  }
+}
+window.location.reload();
 
 // Umschalten der Portal-Bereiche
 function showSection(section) {

@@ -3,7 +3,6 @@ require('dotenv').config(); // .env zuerst laden!
 console.log('Pfad:', __dirname);
 console.log('DATABASE_URL:', process.env.DATABASE_URL);
 
-
 const db = require('./db');
 const express = require('express');
 const cors = require('cors');
@@ -69,6 +68,12 @@ app.post('/api/login', async (req, res) => {
       return res.status(401).json({ error: 'Ungültige E-Mail oder Passwort.' });
     }
     const user = result.rows[0];
+
+    // Prüfe, ob Passwort noch nicht gesetzt ist oder kein String ist
+    if (!user.password_hash || typeof user.password_hash !== 'string') {
+      return res.status(403).json({ error: 'Bitte Passwort vergeben', setPassword: true });
+    }
+
     // Passwort prüfen
     const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) {
@@ -93,6 +98,32 @@ app.post('/api/login', async (req, res) => {
   } catch (err) {
     console.error('Fehler beim Login:', err);
     res.status(500).json({ error: 'Serverfehler beim Login.' });
+  }
+});
+
+// Passwort setzen: POST /api/set-password
+app.post('/api/set-password', async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ error: 'E-Mail und Passwort sind erforderlich.' });
+  }
+  try {
+    // Prüfe, ob User existiert
+    const result = await db.query('SELECT * FROM users WHERE email = $1', [email]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User nicht gefunden.' });
+    }
+    // Prüfe, ob schon ein Passwort gesetzt ist
+    if (result.rows[0].password_hash) {
+      return res.status(409).json({ error: 'Passwort ist bereits gesetzt. Bitte nutze die Login-Funktion.' });
+    }
+    // Neues Passwort hashen und speichern
+    const hash = await bcrypt.hash(password, 10);
+    await db.query('UPDATE users SET password_hash = $1 WHERE email = $2', [hash, email]);
+    res.json({ message: 'Passwort erfolgreich gesetzt!' });
+  } catch (err) {
+    console.error('Fehler beim Setzen des Passworts:', err);
+    res.status(500).json({ error: 'Serverfehler beim Setzen des Passworts.' });
   }
 });
 

@@ -7,12 +7,14 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+  <!-- Hauptnavigation -->
   <nav style="width:100%;background:#1866a5;padding:0.7em 0 0.5em 0;box-shadow:0 2px 12px rgba(40,116,166,0.07);margin-bottom:16px;">
-  <div style="max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;">
-    <span style="color:#fff;font-size:1.2em;font-weight:600;letter-spacing:1px;">Athletenportal</span>
-    <a href="/index.html" style="background:#fff;color:#1866a5;padding:8px 22px;border-radius:22px;font-weight:600;text-decoration:none;box-shadow:0 2px 8px rgba(40,116,166,0.07);transition:background 0.15s;">Zur Ranglisten-Website</a>
-  </div>
-</nav>
+    <div style="max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;">
+      <span style="color:#fff;font-size:1.2em;font-weight:600;letter-spacing:1px;">Athletenportal</span>
+      <a href="/index.html" style="background:#fff;color:#1866a5;padding:8px 22px;border-radius:22px;font-weight:600;text-decoration:none;box-shadow:0 2px 8px rgba(40,116,166,0.07);transition:background 0.15s;">Zur Ranglisten-Website</a>
+    </div>
+  </nav>
+
   <!-- Login-Formular -->
   <div id="login-section" class="login-container">
     <div class="login-title">Athletenportal</div>
@@ -28,6 +30,26 @@
       </form>
       <div class="register-link">
         Noch kein Konto? <a href="#" onclick="alert('Registrierung folgt bald!'); return false;">Jetzt registrieren</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Passwort-Setzen-Formular (wird nur angezeigt, wenn kein Passwort vorhanden) -->
+  <div id="set-password-section" class="login-container" style="display:none;">
+    <div class="login-title">Passwort vergeben</div>
+    <div class="login-box">
+      <h2>Neues Passwort vergeben</h2>
+      <form onsubmit="event.preventDefault(); setPassword();">
+        <div class="login-fields">
+          <input type="email" id="set-password-email" placeholder="E-Mail" readonly>
+          <input type="password" id="set-password-password" placeholder="Neues Passwort" required>
+          <input type="password" id="set-password-password2" placeholder="Passwort wiederholen" required>
+        </div>
+        <button type="submit">Passwort setzen</button>
+        <div id="set-password-error" class="login-error"></div>
+      </form>
+      <div class="register-link">
+        <a href="#" onclick="document.getElementById('set-password-section').style.display='none';document.getElementById('login-section').style.display='flex';return false;">Zurück zur Anmeldung</a>
       </div>
     </div>
   </div>
@@ -95,7 +117,6 @@
       <!-- Ergebnisformular -->
       <form id="result-form" onsubmit="event.preventDefault(); addResult();">
         <input type="text" id="datum" placeholder="tt.mm.jjjj">
-
         <select id="art" required>
           <option>Training</option>
           <option>Wettkampf</option>
@@ -129,13 +150,11 @@
 
     <!-- Profil-Bereich -->
     <div id="profile-section" class="portal-section" style="display:none;">
-  <h2>Profil</h2>
-  <div class="profile-card" id="user-profile">
-    
-    <!-- Wird per JS befüllt -->
-  </div>
-</div>
-
+      <h2>Profil</h2>
+      <div class="profile-card" id="user-profile">
+        <!-- Wird per JS befüllt -->
+      </div>
+    </div>
   </div>
   <script src="main.js"></script>
 </body>
