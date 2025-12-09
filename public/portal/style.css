@@ -1,0 +1,403 @@
+/* ====== GRUNDLAYOUT ====== */
+body {
+  background: linear-gradient(120deg, #1976d2 0%, #90caf9 100%);
+  min-height: 100vh;
+  margin: 0;
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+/* ====== LOGIN ====== */
+.login-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-title {
+  position: absolute;
+  top: 22%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 3.4em;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: #fff;
+  text-shadow: 0 4px 24px rgba(25, 118, 210, 0.38);
+  z-index: 1;
+}
+
+.login-box {
+  background: rgba(255,255,255,0.93);
+  box-shadow: 0 8px 32px 0 rgba(31,38,135,0.18);
+  border-radius: 18px;
+  padding: 36px 32px 24px 32px;
+  min-width: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.login-box h2 {
+  margin-bottom: 24px;
+  color: #1976d2;
+  letter-spacing: 1px;
+}
+
+.login-box input {
+  width: 240px;
+  margin-bottom: 14px;
+  padding: 12px;
+  border: 1px solid #90caf9;
+  border-radius: 8px;
+  outline: none;
+  font-size: 1.1em;
+  background: #f5fafd;
+  transition: border-color 0.2s;
+}
+
+.login-box input:focus {
+  border-color: #1976d2;
+}
+
+.login-box button {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  background: #1976d2;
+  color: white;
+  font-size: 1.1em;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 8px;
+  transition: background 0.2s;
+}
+
+.login-box button:hover {
+  background: #1565c0;
+}
+
+.login-error {
+  color: #d32f2f;
+  margin-top: 8px;
+  min-height: 20px;
+  text-align: center;
+}
+
+.register-link {
+  margin-top: 14px;
+  font-size: 0.95em;
+  color: #333;
+  text-align: center;
+}
+.register-link a {
+  color: #1976d2;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s;
+}
+.register-link a:hover {
+  color: #0d47a1;
+}
+
+/* ====== NAVIGATION ====== */
+.portal-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  min-height: 56px;
+  background: linear-gradient(90deg, #1565c0 0%, #42a5f5 100%);
+  box-shadow: 0 2px 12px rgba(25, 118, 210, 0.13);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  z-index: 100;
+}
+.nav-left {
+  display: flex;
+  gap: 8px;
+}
+.nav-right {
+  display: flex;
+  align-items: center;
+}
+.portal-nav button {
+  background: none;
+  border: none;
+  color: #fff;
+  font-weight: 600;
+  font-size: 1.1em;
+  padding: 14px 20px;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  transition: border-color 0.2s, background 0.2s;
+}
+.portal-nav button.active,
+.portal-nav button:hover {
+  border-bottom: 3px solid #fff;
+  background: rgba(255,255,255,0.12);
+}
+.logout-btn-small {
+  background: #d32f2f;
+  color: #fff;
+  border-radius: 8px;
+  padding: 8px 20px;
+  font-size: 1em;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.logout-btn-small:hover {
+  background: #b71c1c;
+}
+
+/* ====== PORTAL-BEREICH ====== */
+#portal-wrapper {
+  margin-top: 64px; /* Platz für die fixe Navbar */
+  width: 100vw;
+  min-height: calc(100vh - 64px);
+}
+
+/* ====== DASHBOARD ====== */
+.dashboard-header {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  margin: 36px 0 18px 0;
+}
+.dashboard-header h2 {
+  font-size: 2.2em;
+  font-weight: 800;
+  color: #1976d2;
+  letter-spacing: 1px;
+  margin: 0;
+  text-align: center;
+}
+.dashboard-grid {
+  display: flex;
+  gap: 32px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 40px;
+}
+.dashboard-card {
+  background: #f5fafd;
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(31,38,135,0.09);
+  padding: 24px 20px 16px 20px;
+  min-width: 220px;
+  max-width: 320px;
+  flex: 1 1 260px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  transition: box-shadow 0.2s, background 0.2s;
+}
+.dashboard-card:hover {
+  background: #e3f2fd;
+  box-shadow: 0 8px 24px rgba(25, 118, 210, 0.14);
+}
+.dashboard-card h3 {
+  margin-top: 0;
+  margin-bottom: 16px;
+  color: #1976d2;
+  font-size: 1.15em;
+  font-weight: 700;
+  text-align: center;
+}
+.dashboard-table {
+  font-size: 0.98em;
+  width: 100%;
+  margin-bottom: 8px;
+  background: none;
+  border: none;
+}
+.dashboard-table th, .dashboard-table td {
+  padding: 2px 6px;
+  text-align: center;
+  border: none;
+}
+.dashboard-link {
+  color: #1976d2;
+  font-size: 0.97em;
+  margin-top: 8px;
+  text-align: right;
+  width: 100%;
+}
+.dashboard-profile {
+  text-align: center;
+}
+.dashboard-profile img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  margin-bottom: 6px;
+}
+.dashboard-average {
+  font-size: 1.1em;
+  color: #1976d2;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+/* ====== ERGEBNISSE/PORTAL-SECTIONS ====== */
+.portal-section {
+  background: rgba(255,255,255,0.95);
+  box-shadow: 0 8px 32px 0 rgba(31,38,135,0.18);
+  border-radius: 18px;
+  padding: 36px 32px 32px 32px;
+  min-width: 340px;
+  max-width: 700px;
+  margin: 40px auto 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.portal-section table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 18px;
+  background: #f8fafd;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.portal-section th, .portal-section td {
+  padding: 8px 10px;
+  text-align: center;
+  border-bottom: 1px solid #e0e0e0;
+}
+.portal-section th {
+  background: #e3f2fd;
+  color: #1976d2;
+  font-weight: 600;
+}
+.portal-section canvas {
+  max-width: 700px;
+  width: 100%;
+  display: block;
+}
+.portal-section form {
+  width: 100%;
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.portal-section input,
+.portal-section select {
+  flex: 1 1 120px;
+  padding: 10px;
+  margin-bottom: 8px;
+  border: 1px solid #90caf9;
+  border-radius: 8px;
+  font-size: 1em;
+  background: #f5fafd;
+}
+.portal-section button {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 8px;
+  background: #1976d2;
+  color: white;
+  font-size: 1em;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 8px;
+  transition: background 0.2s;
+}
+.portal-section button:hover {
+  background: #1565c0;
+}
+
+/* ====== RESPONSIVE ====== */
+@media (max-width: 900px) {
+  .dashboard-grid { gap: 16px; }
+  .portal-section { padding: 16px 2vw 16px 2vw; }
+  .portal-section, .dashboard-card { min-width: 90vw; max-width: 98vw; }
+  #portal-wrapper { margin-top: 56px; }
+}
+@media (max-width: 700px) {
+  .portal-nav { padding: 0 8px; }
+  .portal-nav button { font-size: 1em; padding: 10px 10px; }
+  .dashboard-card { min-width: 140px; }
+}
+
+/* ====== ENDE ====== */
+.profile-card {
+  background: #f5fafd;
+  border-radius: 18px;
+  box-shadow: 0 2px 12px rgba(31,38,135,0.09);
+  padding: 36px 32px 24px 32px;
+  max-width: 340px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  position: relative;
+}
+
+.profile-avatar {
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 4px 16px rgba(25, 118, 210, 0.12);
+  margin-bottom: 8px;
+  border: 4px solid #e3f2fd;
+  background: #fff;
+}
+
+.profile-name {
+  font-size: 1.5em;
+  font-weight: 700;
+  color: #1976d2;
+  margin-bottom: 2px;
+  text-align: center;
+}
+
+.profile-status {
+  background: #1976d2;
+  color: #fff;
+  padding: 4px 14px;
+  border-radius: 14px;
+  font-size: 1em;
+  font-weight: 600;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.profile-details {
+  width: 100%;
+  font-size: 1.07em;
+  color: #333;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.profile-details span {
+  color: #1976d2;
+  font-weight: 600;
+  min-width: 108px;
+  display: inline-block;
+}
+#dashboard-profile img {
+  width: 80px;           /* oder 100px, je nach Geschmack */
+  height: 80px;
+  object-fit: cover;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  display: block;
+  margin: 0 auto 8px auto;
+}

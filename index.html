@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <title>Nationalkader Ranglisten</title>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <style>
+    /* Disziplin-Buttons */
+    #discipline-buttons {
+      text-align: center;
+      margin: 24px 0 12px 0;
+    }
+    #discipline-buttons button {
+      background: linear-gradient(90deg, #2a9df4 0%, #1866a5 100%);
+      color: #fff;
+      border: none;
+      padding: 12px 28px;
+      margin: 0 8px 8px 0;
+      border-radius: 24px;
+      font-size: 1.08rem;
+      font-family: inherit;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      transition: background 0.2s, box-shadow 0.2s, transform 0.08s;
+      box-shadow: 0 2px 12px rgba(40,116,166,0.08);
+    }
+    #discipline-buttons button.active,
+    #discipline-buttons button:hover {
+      background: linear-gradient(90deg, #1866a5 0%, #2a9df4 100%);
+      box-shadow: 0 4px 20px rgba(40,116,166,0.14);
+      transform: translateY(-2px) scale(1.03);
+    }
+    .coming-soon-hint {
+      margin: 40px auto 30px auto;
+      max-width: 600px;
+      font-size: 1.4em;
+      font-weight: 600;
+      color: #1866a5;
+      background: linear-gradient(90deg, #eaf6fb 0%, #f6fafd 100%);
+      border-radius: 18px;
+      box-shadow: 0 2px 18px rgba(40,116,166,0.09);
+      text-align: center;
+      padding: 38px 18px 34px 18px;
+      letter-spacing: 1px;
+      opacity: 0.93;
+    }
+    @media (max-width: 650px) {
+      #discipline-buttons button {
+        font-size: 0.97rem;
+        padding: 10px 16px;
+      }
+    }
+  </style>
+  <script>
+    // Links für alle Disziplinen und Wertungen
+    const csvLinks = {
+      luftgewehr: {
+        quali:     "https://docs.google.com/spreadsheets/d/e/2PACX-1vTlvJcMPTiffrTZOCGhuK_e-3vSLOtIy5rNWYejry5Eg_vIYJw99Fs2rjGZCe9cQw/pub?gid=1121230767&single=true&output=csv",
+        rangliste: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTlvJcMPTiffrTZOCGhuK_e-3vSLOtIy5rNWYejry5Eg_vIYJw99Fs2rjGZCe9cQw/pub?gid=1621705108&single=true&output=csv",
+        junioren:  "https://docs.google.com/spreadsheets/d/e/2PACX-1vTlvJcMPTiffrTZOCGhuK_e-3vSLOtIy5rNWYejry5Eg_vIYJw99Fs2rjGZCe9cQw/pub?gid=336990874&single=true&output=csv"
+      },
+      kleinkaliber: {
+        quali:     "https://docs.google.com/spreadsheets/d/e/2PACX-1vTlvJcMPTiffrTZOCGhuK_e-3vSLOtIy5rNWYejry5Eg_vIYJw99Fs2rjGZCe9cQw/pub?gid=1350177456&single=true&output=csv",
+        rangliste: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTlvJcMPTiffrTZOCGhuK_e-3vSLOtIy5rNWYejry5Eg_vIYJw99Fs2rjGZCe9cQw/pub?gid=1709551018&single=true&output=csv",
+        junioren:  "https://docs.google.com/spreadsheets/d/e/2PACX-1vTlvJcMPTiffrTZOCGhuK_e-3vSLOtIy5rNWYejry5Eg_vIYJw99Fs2rjGZCe9cQw/pub?gid=651732067&single=true&output=csv"
+      },
+      pistole: {
+        // EM Qualifikation gibt es nicht!
+        rangliste: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTlvJcMPTiffrTZOCGhuK_e-3vSLOtIy5rNWYejry5Eg_vIYJw99Fs2rjGZCe9cQw/pub?gid=712400822&single=true&output=csv",
+        junioren:  "https://docs.google.com/spreadsheets/d/e/2PACX-1vTlvJcMPTiffrTZOCGhuK_e-3vSLOtIy5rNWYejry5Eg_vIYJw99Fs2rjGZCe9cQw/pub?gid=1047213867&single=true&output=csv"
+      }
+    };
+
+    // Limits wie gehabt (bei Bedarf pro Disziplin erweiterbar)
+    const limits = {
+      frauen:   { a: 629.1,  b: 627.8 },
+      herren:   { a: 628.9,  b: 628.0 },
+      juniorinnen: { a: 626.6,  b: 624.9 },
+      junioren: { a: 624.1,  b: 621.4 }
+    };
+
+    let currentDiscipline = 'luftgewehr';
+    let currentWertung = 'quali';
+
+    function switchDiscipline(discipline, btn) {
+      if (discipline !== currentDiscipline) {
+        currentDiscipline = discipline;
+        document.querySelectorAll('#discipline-buttons button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        if (!csvLinks[currentDiscipline][currentWertung]) {
+          currentWertung = Object.keys(csvLinks[currentDiscipline])[0];
+        }
+        updateWertungButtons();
+        loadTable(currentDiscipline, currentWertung);
+      }
+    }
+
+    function switchWertung(wertung, btn) {
+      if (wertung !== currentWertung) {
+        currentWertung = wertung;
+        document.querySelectorAll('#buttons button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        loadTable(currentDiscipline, currentWertung);
+      }
+    }
+
+    function updateWertungButtons() {
+      document.querySelectorAll('#buttons button').forEach(btn => {
+        const wertung = btn.getAttribute('data-wertung');
+        btn.style.display = csvLinks[currentDiscipline][wertung] ? '' : 'none';
+        if (wertung === currentWertung) btn.classList.add('active');
+        else btn.classList.remove('active');
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+      updateWertungButtons();
+      loadTable(currentDiscipline, currentWertung);
+    });
+
+    function toNumberDE(val) {
+      if (!val) return NaN;
+      return parseFloat(val.replace(/\./g, '').replace(',', '.'));
+    }
+
+    function getField(row, key) {
+      let found = Object.keys(row).find(
+        k => k.trim().toLowerCase() === key.trim().toLowerCase()
+      );
+      return found ? row[found] : "";
+    }
+
+    function renderLimitLabel(cat) {
+      const l = limits[cat];
+      if (!l) return '';
+      return `
+        <span class="limit-label a-limit">A-Limit: ${l.a}</span>
+        <span class="limit-label b-limit">B-Limit: ${l.b}</span>
+      `;
+    }
+
+    function renderRelevantTable(title, rows, catKey) {
+      if (!rows || rows.length === 0) return '';
+      const allKeys = Object.keys(rows[0]);
+      const idxName = allKeys.findIndex(k => k.trim().toLowerCase() === "name");
+      const idxDurchschnitt = allKeys.findIndex(k => k.trim().toLowerCase() === "durchschnitt");
+      if (idxName === -1 || idxDurchschnitt === -1) return '';
+      const portraitKey = allKeys.find(k => k.trim().toLowerCase().includes("portrait"));
+      const profillinkKey = allKeys.find(k => k.trim().toLowerCase().includes("profillink"));
+      const relevantKeys = [portraitKey, ...allKeys.slice(idxName, idxDurchschnitt + 1)];
+      const wettkampfKeys = allKeys.slice(idxName + 1, idxDurchschnitt)
+        .filter(k => !k.toLowerCase().includes("gesamtergebnis"));
+
+      let html = `
+        <div class="h2-row">
+          <h2>${title}</h2>
+          <div class="limit-labels">
+            ${renderLimitLabel(catKey)}
+          </div>
+        </div>
+        <table>
+        <thead><tr>`;
+      relevantKeys.forEach(col => {
+        if (col === portraitKey) html += `<th>Portrait</th>`;
+        else html += `<th>${col}</th>`;
+      });
+      html += '</tr></thead><tbody>';
+
+      rows.forEach(row => {
+        html += '<tr>';
+        relevantKeys.forEach(col => {
+          if (col === portraitKey) {
+            const portrait = row[col];
+            const profillink = profillinkKey ? row[profillinkKey] : "";
+            if (portrait) {
+              if (profillink && profillink.trim() !== "") {
+                html += `<td data-label="Portrait"><a href="${profillink}" target="_blank" rel="noopener"><img src="${portrait}" class="portrait" alt="Portrait"></a></td>`;
+              } else {
+                html += `<td data-label="Portrait"><img src="${portrait}" class="portrait" alt="Portrait"></td>`;
+              }
+            } else {
+              html += `<td data-label="Portrait"></td>`;
+            }
+          } else if (wettkampfKeys.includes(col)) {
+            const val = row[col];
+            const num = toNumberDE(val);
+            const l = limits[catKey];
+            let cellClass = "";
+            if (l && num >= l.a) cellClass = "limit-cell-a";
+            else if (l && num >= l.b) cellClass = "limit-cell-b";
+            html += `<td data-label="${col}" class="${cellClass}">${val || ''}</td>`;
+          } else {
+            html += `<td data-label="${col}">${row[col] || ''}</td>`;
+          }
+        });
+        html += '</tr>';
+      });
+      html += '</tbody></table>';
+      return html;
+    }
+
+    function loadTable(discipline, wertung) {
+      updateWertungButtons();
+      let csvUrl = csvLinks[discipline][wertung];
+      if (!csvUrl) {
+        document.getElementById('content').innerHTML = '<div style="text-align:center;margin:2em 0;">Keine Daten für diese Auswahl.</div>';
+        return;
+      }
+      fetch(csvUrl)
+        .then(response => response.text())
+        .then(csv => {
+          Papa.parse(csv, {
+            header: true,
+            skipEmptyLines: true,
+            complete: function(results) {
+              let html = '';
+              const data = results.data;
+
+              // --- NEU: Coming Soon-Hinweis, falls keine Ergebnisse ---
+              const hasErgebnis = data.some(row => {
+                const ds = getField(row, "Durchschnitt");
+                const ges = getField(row, "Gesamtergebnis");
+                return (ds && ds.trim() !== "" && !isNaN(toNumberDE(ds))) ||
+                       (ges && ges.trim() !== "" && !isNaN(toNumberDE(ges)));
+              });
+              if (!hasErgebnis && discipline === 'kleinkaliber') {
+                document.getElementById('content').innerHTML = '<div class="coming-soon-hint">Kleinkaliber-Ergebnisse folgen demnächst ...</div>';
+                return;
+              }
+
+              let frauen = data.filter(row => (getField(row, "Geschlecht")+"").toLowerCase().replace(/\s/g,"").startsWith("frauen"));
+              let herren = data.filter(row => (getField(row, "Geschlecht")+"").toLowerCase().replace(/\s/g,"").startsWith("herren"));
+              let juniorinnen = data.filter(row => (getField(row, "Geschlecht")+"").toLowerCase().replace(/\s/g,"").startsWith("juniorinn"));
+              let junioren = data.filter(row => (getField(row, "Geschlecht")+"").toLowerCase().replace(/\s/g,"").startsWith("junioren"));
+
+              frauen.sort((a, b) => toNumberDE(getField(b, "Durchschnitt")) - toNumberDE(getField(a, "Durchschnitt")));
+              herren.sort((a, b) => toNumberDE(getField(b, "Durchschnitt")) - toNumberDE(getField(a, "Durchschnitt")));
+              juniorinnen.sort((a, b) => toNumberDE(getField(b, "Durchschnitt")) - toNumberDE(getField(a, "Durchschnitt")));
+              junioren.sort((a, b) => toNumberDE(getField(b, "Durchschnitt")) - toNumberDE(getField(a, "Durchschnitt")));
+
+              if(wertung === 'quali' || wertung === 'rangliste') {
+                html += renderRelevantTable('Frauen', frauen, 'frauen');
+                html += renderRelevantTable('Herren', herren, 'herren');
+              } else if(wertung === 'junioren') {
+                html += renderRelevantTable('Juniorinnen', juniorinnen, 'juniorinnen');
+                html += renderRelevantTable('Junioren', junioren, 'junioren');
+              }
+              document.getElementById('content').innerHTML = html;
+
+              // Animationen: Fade-In + Rangwechsel-Highlight für ALLE Zeilen
+              const rowsEls = document.querySelectorAll('tbody tr');
+              rowsEls.forEach((row, i) => {
+                row.classList.remove('fadein', 'rank-animate');
+                void row.offsetWidth;
+                row.style.animationDelay = (0.05 * i) + 's';
+                row.classList.add('fadein', 'rank-animate');
+              });
+            }
+          });
+        });
+    }
+  </script>
+</head>
+<body>
+  <header>
+    <img src="bilder/logo.jpg" alt="Logo" id="logo">
+  </header>
+  <h1>RANGLISTE</h1>
+  <div id="discipline-buttons">
+    <button class="active" onclick="switchDiscipline('luftgewehr', this)">Luftgewehr</button>
+    <button onclick="switchDiscipline('kleinkaliber', this)">Kleinkaliber</button>
+    <button onclick="switchDiscipline('pistole', this)">Luftpistole</button>
+  </div>
+  <div id="buttons">
+    <button class="active" data-wertung="quali" onclick="switchWertung('quali', this)">EM Qualifikation</button>
+    <button data-wertung="rangliste" onclick="switchWertung('rangliste', this)">Rangliste</button>
+    <button data-wertung="junioren" onclick="switchWertung('junioren', this)">Junioren & Juniorinnen</button>
+  </div>
+  <div id="content"></div>
+</body>
+</html>

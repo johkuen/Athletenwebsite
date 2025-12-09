@@ -1,0 +1,379 @@
+let token = null;
+let user = null;
+let wettkaempfe = [];
+let editingResultId = null;
+
+// Immer als Basis für Bilder verwenden!
+const IMAGE_BASE_URL = "http://localhost:4000";
+
+// Login-Funktion
+async function login() {
+  const email = document.getElementById('login-email').value;
+  const password = document.getElementById('login-password').value;
+  const res = await fetch('http://localhost:4000/api/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password })
+  });
+  const data = await res.json();
+  if (res.ok) {
+    token = data.token;
+    user = data.user;
+    document.querySelector('.portal-nav').style.display = 'flex';
+    document.getElementById('login-section').style.display = 'none';
+    document.getElementById('portal-wrapper').style.display = 'block';
+    document.getElementById('athlete-name').innerText = (user.vorname || '') + ' ' + (user.nachname || '');
+    showSection('dashboard');
+    fillDashboardResults();
+    fillDashboardChart();
+    fillDashboardProfile();
+  } else {
+    document.getElementById('login-error').innerText = data.error || 'Login fehlgeschlagen';
+  }
+}
+
+// Umschalten der Portal-Bereiche
+function showSection(section) {
+  document.querySelectorAll('.portal-section').forEach(s => s.style.display = 'none');
+  document.getElementById(section + '-section').style.display = 'block';
+
+  document.querySelectorAll('.portal-nav button').forEach(btn => btn.classList.remove('active'));
+  const navBtn = Array.from(document.querySelectorAll('.portal-nav button'))
+    .find(btn => btn.onclick && btn.onclick.toString().includes(section));
+  if (navBtn) navBtn.classList.add('active');
+
+  if (section === 'dashboard') {
+    fillDashboardResults();
+    fillDashboardChart();
+    fillDashboardProfile();
+  }
+  if (section === 'results') loadResults();
+  if (section === 'stats') loadResults();
+  if (section === 'profile') loadProfile();
+}
+
+// Logout-Funktion
+function logout() {
+  token = null;
+  user = null;
+  document.querySelector('.portal-nav').style.display = 'none';
+  document.getElementById('portal-wrapper').style.display = 'none';
+  document.getElementById('login-section').style.display = 'flex';
+}
+
+// WETTKÄMPFE LADEN (für Dropdown)
+async function loadWettkaempfe() {
+  const res = await fetch('http://localhost:4000/api/wettkaempfe');
+  wettkaempfe = await res.json();
+  const dropdown = document.getElementById('wettkampf-dropdown');
+  dropdown.innerHTML = '<option value="">Wettkampf auswählen</option>' +
+    wettkaempfe.map(w => 
+      `<option value="${w.name}" data-datum="${w.datum || ''}">${w.name}</option>`
+    ).join('');
+
+  dropdown.addEventListener('change', function() {
+    const selected = dropdown.options[dropdown.selectedIndex];
+    const datum = selected.getAttribute('data-datum');
+    if (datum) {
+      // ISO-String → Nur Datumsteil extrahieren
+      const d = new Date(datum);
+      if (!isNaN(d)) {
+        const tag = String(d.getDate()).padStart(2, "0");
+        const monat = String(d.getMonth() + 1).padStart(2, "0");
+        const jahr = d.getFullYear();
+        document.getElementById('datum').value = `${tag}.${monat}.${jahr}`;
+        console.log('Datum gesetzt auf:', `${tag}.${monat}.${jahr}`);
+      }
+    }
+  });
+}
+
+// DROPDOWN ANZEIGEN, WENN ART=WETTKAMPF
+document.getElementById('art').addEventListener('change', function() {
+  const isWettkampf = this.value === 'Wettkampf';
+  const dropdown = document.getElementById('wettkampf-dropdown');
+  dropdown.style.display = isWettkampf ? 'inline-block' : 'none';
+  if (isWettkampf) loadWettkaempfe();
+});
+
+async function loadResults() {
+  if (!user) return;
+  const res = await fetch(`http://localhost:4000/api/results/${user.id}`);
+  const data = await res.json();
+  const tbody = document.querySelector('#results-table tbody');
+  if (tbody) {
+    tbody.innerHTML = '';
+    data.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${r.datum.substr(0,10)}</td>
+        <td>${r.art}</td>
+        <td>${r.wert}</td>
+        <td>${r.kommentar || ''}</td>
+        <td><button type="button" onclick="editResult('${r.id}')">Bearbeiten</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+  if (document.getElementById('chart')) drawChart(data);
+}
+
+// ERGEBNIS SPEICHERN/BEARBEITEN
+async function addResult() {
+  let datum = document.getElementById('datum').value;
+  const art = document.getElementById('art').value;
+  // Wert als String holen, Komma durch Punkt ersetzen
+  let wertStr = document.getElementById('wert').value.replace(',', '.');
+  const wert = parseFloat(wertStr);
+  const kommentar = document.getElementById('kommentar').value;
+  let wettkampf = '';
+  if (art === 'Wettkampf') {
+    wettkampf = document.getElementById('wettkampf-dropdown').value;
+  }
+
+  // Datum von tt.mm.jjjj nach yyyy-mm-dd umwandeln
+  if (datum && datum.includes('.')) {
+    const [tag, monat, jahr] = datum.split('.');
+    datum = `${jahr}-${monat.padStart(2, '0')}-${tag.padStart(2, '0')}`;
+  }
+
+  // Optional: Prüfen, ob wert wirklich eine Zahl ist
+  if (isNaN(wert)) {
+    document.getElementById('result-message').innerText = 'Bitte eine gültige Zahl für das Ergebnis eingeben!';
+    return;
+  }
+
+  let url = `http://localhost:4000/api/results/${user.id}`;
+  let method = 'POST';
+  if (window.editingResultId) {
+    url = `http://localhost:4000/api/results/${window.editingResultId}`;
+    method = 'PUT';
+  }
+  const res = await fetch(url, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ user_id: user.id, datum, art, wert, kommentar, wettkampf })
+  });
+  const data = await res.json();
+  if (res.ok) {
+    document.getElementById('result-message').innerText = 'Gespeichert!';
+    loadResults();
+    window.editingResultId = null;
+    document.getElementById('result-form').reset();
+    document.getElementById('wettkampf-dropdown').style.display = 'none';
+  } else {
+    document.getElementById('result-message').innerText = data.error || 'Fehler beim Speichern';
+  }
+}
+function formatDateToDE(dateStr) {
+  // Erwartet yyyy-mm-dd oder ISO
+  const d = new Date(dateStr);
+  if (!isNaN(d)) {
+    const tag = String(d.getDate()).padStart(2, "0");
+    const monat = String(d.getMonth() + 1).padStart(2, "0");
+    const jahr = d.getFullYear();
+    return `${tag}.${monat}.${jahr}`;
+  }
+  return dateStr;
+}
+
+// Beim Füllen des Formulars:
+document.getElementById('datum').value = formatDateToDE(result.datum);
+
+// ERGEBNISSE LADEN (Detailansicht)
+async function addResult() {
+  let datum = document.getElementById('datum').value;
+  const art = document.getElementById('art').value;
+  // Wert als String holen, Komma durch Punkt ersetzen
+  let wertStr = document.getElementById('wert').value.replace(',', '.');
+  const wert = parseFloat(wertStr);
+  const kommentar = document.getElementById('kommentar').value;
+  let wettkampf = '';
+  if (art === 'Wettkampf') {
+    wettkampf = document.getElementById('wettkampf-dropdown').value;
+  }
+
+  // Datum von tt.mm.jjjj nach yyyy-mm-dd umwandeln
+  if (datum && datum.includes('.')) {
+    const [tag, monat, jahr] = datum.split('.');
+    datum = `${jahr}-${monat.padStart(2, '0')}-${tag.padStart(2, '0')}`;
+  }
+
+  // Optional: Prüfen, ob wert wirklich eine Zahl ist
+  if (isNaN(wert)) {
+    document.getElementById('result-message').innerText = 'Bitte eine gültige Zahl für das Ergebnis eingeben!';
+    return;
+  }
+
+  // Für NEUE Ergebnisse immer auf /api/results posten!
+  let url = 'http://localhost:4000/api/results';
+  let method = 'POST';
+  let body = { user_id: user.id, datum, art, wert, kommentar, wettkampf };
+
+  // Optional: Für Bearbeiten (PUT), falls du eine PUT-Route hast
+  if (window.editingResultId) {
+    url = `http://localhost:4000/api/results/${window.editingResultId}`;
+    method = 'PUT';
+    body.id = window.editingResultId;
+  }
+
+  const res = await fetch(url, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+
+  // Fehlerbehandlung, falls keine JSON-Antwort
+  let data;
+  try {
+    data = await res.json();
+  } catch (e) {
+    document.getElementById('result-message').innerText = 'Serverfehler: Ungültige Antwort vom Server!';
+    return;
+  }
+
+  if (res.ok) {
+    document.getElementById('result-message').innerText = 'Gespeichert!';
+    loadResults();
+    window.editingResultId = null;
+    document.getElementById('result-form').reset();
+    document.getElementById('wettkampf-dropdown').style.display = 'none';
+  } else {
+    document.getElementById('result-message').innerText = data.error || 'Fehler beim Speichern';
+  }
+}
+
+// Chart.js Leistungskurve (Detailansicht)
+function drawChart(results) {
+  const ctx = document.getElementById('chart').getContext('2d');
+  results.sort((a, b) => new Date(a.datum) - new Date(b.datum));
+  const labels = results.map(r => r.datum.substr(0,10));
+  const werte = results.map(r => parseFloat(r.wert));
+  const windowSize = 3;
+  function movingAverage(arr, windowSize) {
+    return arr.map((_, idx, a) => {
+      const start = Math.max(0, idx - windowSize + 1);
+      const window = a.slice(start, idx + 1);
+      const avg = window.reduce((sum, v) => sum + v, 0) / window.length;
+      return avg;
+    });
+  }
+  const movingAvgArray = movingAverage(werte, windowSize);
+  if (window.myChart) window.myChart.destroy();
+  window.myChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Ergebnis',
+          data: werte,
+          borderColor: 'blue',
+          fill: false
+        },
+        {
+          label: `Gleitender Durchschnitt (${windowSize})`,
+          data: movingAvgArray,
+          borderColor: 'rgba(255, 99, 132, 0.5)',
+          borderWidth: 2,
+          borderDash: [5, 5],
+          pointRadius: 0,
+          fill: false
+        }
+      ]
+    },
+    options: {
+      plugins: {
+        legend: { display: true }
+      }
+    }
+  });
+}
+
+// Profil laden (Detailansicht)
+async function loadProfile() {
+  if (!user) return;
+  const res = await fetch(`http://localhost:4000/api/user/${user.id}`);
+  const data = await res.json();
+  const bildUrl = data.bild_url ? IMAGE_BASE_URL + data.bild_url : IMAGE_BASE_URL + "/default.jpg";
+  document.getElementById('user-profile').innerHTML = `
+    <img src="${bildUrl}" alt="Profilbild" class="profile-avatar">
+    <div class="profile-name">${data.vorname || ''} ${data.nachname || ''}</div>
+    <div class="profile-status">${data.kaderstatus || 'Kein Status'}</div>
+    <div class="profile-details">
+      <div><span>Geburtsdatum:</span> ${data.geburtsdatum || '-'}</div>
+      <div><span>Wohnort:</span> ${data.wohnort || '-'}</div>
+      <div><span>E-Mail:</span> ${data.email || '-'}</div>
+    </div>
+  `;
+}
+
+// Dashboard: Nur letzte 3 Wettkampfergebnisse mit Wettkampfname
+async function fillDashboardResults() {
+  if (!user) return;
+  const res = await fetch(`http://localhost:4000/api/results/${user.id}`);
+  const data = await res.json();
+
+  const wettkampfErgebnisse = data
+    .filter(r => r.art === 'Wettkampf')
+    .sort((a, b) => new Date(b.datum) - new Date(a.datum))
+    .slice(0, 3);
+
+  const tbody = document.querySelector('#dashboard-results-table tbody');
+  tbody.innerHTML = '';
+  wettkampfErgebnisse.forEach(r => {
+    const wettkampf = r.wettkampf || r.kommentar || '-';
+    const wert = r.wert || '-';
+    const datum = r.datum ? r.datum.substr(0,10) : '-';
+    tbody.innerHTML += `<tr><td>${datum}</td><td>${wettkampf}</td><td>${wert}</td></tr>`;
+  });
+}
+
+// Dashboard: Mini-Leistungskurve und Durchschnitt
+async function fillDashboardChart() {
+  if (!user) return;
+  const res = await fetch(`http://localhost:4000/api/results/${user.id}`);
+  const data = await res.json();
+
+  const werte = data.map(r => parseFloat(r.wert)).filter(Number.isFinite);
+  const avg = werte.length ? (werte.reduce((a, b) => a + b, 0) / werte.length).toFixed(2) : '-';
+  document.getElementById('dashboard-average').innerHTML = `Ø ${avg}`;
+
+  const last5 = data.slice(-5);
+  const labels = last5.map(r => r.datum.substr(5,5));
+  const werte5 = last5.map(r => parseFloat(r.wert));
+
+  const ctx = document.getElementById('dashboard-chart').getContext('2d');
+  if (window.dashChart) window.dashChart.destroy();
+  window.dashChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Ergebnis',
+        data: werte5,
+        borderColor: 'blue',
+        borderWidth: 2,
+        fill: false,
+        pointRadius: 2
+      }]
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: false } }
+    }
+  });
+}
+
+// Dashboard: Mini-Profil
+async function fillDashboardProfile() {
+  if (!user) return;
+  const res = await fetch(`http://localhost:4000/api/user/${user.id}`);
+  const data = await res.json();
+  const bildUrl = data.bild_url ? IMAGE_BASE_URL + data.bild_url : IMAGE_BASE_URL + "/default.jpg";
+  document.getElementById('dashboard-profile').innerHTML = `
+    <img src="${bildUrl}" alt="Profilbild">
+    <div><b>${data.vorname || ''} ${data.nachname || ''}</b></div>
+    <div style="font-size:0.95em;">${data.kaderstatus || ''}</div>
+  `;
+}

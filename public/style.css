@@ -1,0 +1,326 @@
+body {
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+  background: linear-gradient(120deg, #eaf6fb 0%, #f6fafd 100%);
+  margin: 0;
+  color: #222;
+}
+
+header {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 0 10px 0;
+  background: transparent;
+}
+
+#logo {
+  height: 70px;
+  max-width: 250px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 2px 8px rgba(40,116,166,0.10));
+}
+
+h1 {
+  text-align: center;
+  color: #1866a5;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  margin: 20px 0 30px 0;
+  font-size: 2.2rem;
+}
+
+#buttons {
+  text-align: center;
+  margin: 30px 0 30px 0;
+}
+
+#buttons button {
+  background: linear-gradient(90deg, #2a9df4 0%, #1866a5 100%);
+  color: #fff;
+  border: none;
+  padding: 14px 36px;
+  margin: 0 10px;
+  border-radius: 24px;
+  font-size: 1.12rem;
+  font-family: inherit;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.08s;
+  box-shadow: 0 2px 12px rgba(40,116,166,0.08);
+}
+
+#buttons button.active,
+#buttons button:hover {
+  background: linear-gradient(90deg, #1866a5 0%, #2a9df4 100%);
+  box-shadow: 0 4px 20px rgba(40,116,166,0.14);
+  transform: translateY(-2px) scale(1.03);
+}
+
+/* --- Perfekt zentrierte Überschrift und Limits rechts --- */
+.h2-row {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  min-height: 2.5em;
+  margin-bottom: 0.4em;
+}
+
+.h2-row h2 {
+  margin: 0 auto;
+  padding: 0 24px;
+  min-width: 120px;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #2a9df4;
+  letter-spacing: 1px;
+  text-align: center;
+  flex: 0 1 auto;
+  z-index: 1;
+  background: #fff;
+}
+
+.limit-labels {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 2;
+}
+
+/* Limit-Labels im modernen Button-/Pill-Stil */
+.limit-label {
+  display: inline-block;
+  padding: 6px 18px;
+  border-radius: 999px;
+  font-size: 1.04rem;
+  font-weight: 700;
+  color: #fff;
+  box-shadow: 0 2px 10px rgba(44, 204, 64, 0.08), 0 1.5px 8px rgba(243, 156, 18, 0.08);
+  letter-spacing: 1px;
+  vertical-align: middle;
+  transition: box-shadow 0.18s;
+  border: none;
+}
+.a-limit {
+  background: linear-gradient(90deg, #2ecc40 0%, #27ae60 100%);
+  box-shadow: 0 2px 12px rgba(44,204,64,0.16);
+}
+.b-limit {
+  background: linear-gradient(90deg, #f39c12 0%, #e67e22 100%);
+  box-shadow: 0 2px 12px rgba(243,156,18,0.16);
+}
+
+/* Limit-Hinterlegung für Zellen */
+.limit-cell-a {
+  background: linear-gradient(90deg, #eafbe6 0%, #d6f5e3 100%) !important;
+  color: #1a7f38 !important;
+  font-weight: 700;
+  border-radius: 8px;
+  box-shadow: 0 1px 6px rgba(44,204,64,0.07);
+}
+.limit-cell-b {
+  background: linear-gradient(90deg, #fff8e1 0%, #fff3cf 100%) !important;
+  color: #b06c00 !important;
+  font-weight: 700;
+  border-radius: 8px;
+  box-shadow: 0 1px 6px rgba(243,156,18,0.07);
+}
+
+/* Modernes Tabellen-Design */
+table {
+  width: 96%;
+  margin: 0 auto 40px auto;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: #fff;
+  box-shadow: 0 4px 32px rgba(40,116,166,0.10);
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+th, td {
+  padding: 16px 10px;
+  text-align: center;
+  font-size: 1rem;
+  color: #222;
+  background: #fff;
+  opacity: 1;
+}
+
+th {
+  background: #f1f8fc;
+  color: #1866a5;
+  font-weight: 700;
+  border-bottom: 2px solid #e0e7ef;
+  letter-spacing: 0.5px;
+}
+
+tr {
+  background: #fff;
+  transition: background 0.15s;
+  opacity: 1;
+}
+
+tr.rank-animate {
+  animation: rankSwitch 1.2s cubic-bezier(.45,.05,.55,.95);
+  z-index: 1;
+  position: relative;
+}
+@keyframes rankSwitch {
+  0%   { background: #fffbe7; }
+  40%  { background: #ffe066; }
+  80%  { background: #ffe066; }
+  100% { background: inherit; }
+}
+
+tr:hover td {
+  background: #eaf6fb;
+}
+
+td {
+  border-bottom: 1px solid #f1f1f1;
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+.portrait {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2.5px solid #2a9df4;
+  box-shadow: 0 1px 5px rgba(40,116,166,0.10);
+  background: #eaf6fb;
+}
+
+/* Responsive Anpassungen */
+@media (max-width: 900px) {
+  table { font-size: 0.93rem; }
+  #logo { height: 50px; max-width: 140px; }
+}
+
+@media (max-width: 700px) {
+  table, thead, tbody, th, td, tr { display: block; }
+  th { position: absolute; top: -9999px; left: -9999px; }
+  td { border: none; border-bottom: 1px solid #eee; position: relative; padding-left: 52%; }
+  td:before { position: absolute; top: 16px; left: 12px; width: 45%; white-space: nowrap; font-weight: bold; color: #888; content: attr(data-label);}
+  tr { margin-bottom: 18px; }
+  #logo { height: 34px; max-width: 90px; }
+  .h2-row {
+    flex-direction: column;
+    align-items: center;
+    min-height: unset;
+  }
+  .h2-row h2 {
+    font-size: 1.1rem;
+    width: 100%;
+    padding: 0;
+  }
+  .limit-labels {
+    position: static;
+    transform: none;
+    margin-top: 8px;
+    justify-content: center;
+    width: 100%;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  background: #eaf6fb;
+}
+::-webkit-scrollbar-thumb {
+  background: #b3d4ee;
+  border-radius: 8px;
+}
+/* --- Disziplin-Buttons über den Wertungs-Buttons --- */
+#discipline-buttons {
+  text-align: center;
+  margin: 24px 0 12px 0;
+}
+#discipline-buttons button {
+  background: linear-gradient(90deg, #2a9df4 0%, #1866a5 100%);
+  color: #fff;
+  border: none;
+  padding: 12px 28px;
+  margin: 0 8px 8px 0;
+  border-radius: 24px;
+  font-size: 1.08rem;
+  font-family: inherit;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.08s;
+  box-shadow: 0 2px 12px rgba(40,116,166,0.08);
+}
+#discipline-buttons button.active,
+#discipline-buttons button:hover {
+  background: linear-gradient(90deg, #1866a5 0%, #2a9df4 100%);
+  box-shadow: 0 4px 20px rgba(40,116,166,0.14);
+  transform: translateY(-2px) scale(1.03);
+}
+
+@media (max-width: 650px) {
+  #discipline-buttons button {
+    font-size: 0.97rem;
+    padding: 10px 16px;
+  }
+}
+/* Disziplin-Buttons über den Wertungs-Buttons */
+#discipline-buttons {
+  text-align: center;
+  margin: 24px 0 12px 0;
+}
+#discipline-buttons button {
+  background: linear-gradient(90deg, #2a9df4 0%, #1866a5 100%);
+  color: #fff;
+  border: none;
+  padding: 12px 28px;
+  margin: 0 8px 8px 0;
+  border-radius: 24px;
+  font-size: 1.08rem;
+  font-family: inherit;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.08s;
+  box-shadow: 0 2px 12px rgba(40,116,166,0.08);
+}
+#discipline-buttons button.active,
+#discipline-buttons button:hover {
+  background: linear-gradient(90deg, #1866a5 0%, #2a9df4 100%);
+  box-shadow: 0 4px 20px rgba(40,116,166,0.14);
+  transform: translateY(-2px) scale(1.03);
+}
+
+@media (max-width: 650px) {
+  #discipline-buttons button {
+    font-size: 0.97rem;
+    padding: 10px 16px;
+  }
+}
+.coming-soon-hint {
+  margin: 40px auto 30px auto;
+  max-width: 600px;
+  font-size: 1.4em;
+  font-weight: 600;
+  color: #1866a5;
+  background: linear-gradient(90deg, #eaf6fb 0%, #f6fafd 100%);
+  border-radius: 18px;
+  box-shadow: 0 2px 18px rgba(40,116,166,0.09);
+  text-align: center;
+  padding: 38px 18px 34px 18px;
+  letter-spacing: 1px;
+  opacity: 0.93;
+}
+

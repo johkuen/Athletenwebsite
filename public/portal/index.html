@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Athletenportal</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <nav style="width:100%;background:#1866a5;padding:0.7em 0 0.5em 0;box-shadow:0 2px 12px rgba(40,116,166,0.07);margin-bottom:16px;">
+  <div style="max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;">
+    <span style="color:#fff;font-size:1.2em;font-weight:600;letter-spacing:1px;">Athletenportal</span>
+    <a href="/index.html" style="background:#fff;color:#1866a5;padding:8px 22px;border-radius:22px;font-weight:600;text-decoration:none;box-shadow:0 2px 8px rgba(40,116,166,0.07);transition:background 0.15s;">Zur Ranglisten-Website</a>
+  </div>
+</nav>
+  <!-- Login-Formular -->
+  <div id="login-section" class="login-container">
+    <div class="login-title">Athletenportal</div>
+    <div class="login-box">
+      <h2>Anmeldung</h2>
+      <form onsubmit="event.preventDefault(); login();">
+        <div class="login-fields">
+          <input type="email" id="login-email" placeholder="E-Mail" required>
+          <input type="password" id="login-password" placeholder="Passwort" required>
+        </div>
+        <button type="submit">Einloggen</button>
+        <div id="login-error" class="login-error"></div>
+      </form>
+      <div class="register-link">
+        Noch kein Konto? <a href="#" onclick="alert('Registrierung folgt bald!'); return false;">Jetzt registrieren</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Portal-Navigation (immer ganz oben, unabhängig vom Portal-Inhalt) -->
+  <nav class="portal-nav" style="display:none;">
+    <div class="nav-left">
+      <button onclick="showSection('dashboard')" class="active">Dashboard</button>
+      <button onclick="showSection('results')">Ergebnisse</button>
+      <button onclick="showSection('stats')">Statistik</button>
+      <button onclick="showSection('profile')">Profil</button>
+    </div>
+    <div class="nav-right">
+      <button onclick="logout()" class="logout-btn-small">Abmelden</button>
+    </div>
+  </nav>
+
+  <!-- Portal-Bereich (wird erst nach Login sichtbar) -->
+  <div id="portal-wrapper" style="display:none;">
+
+    <!-- Dashboard (Startseite nach Login) -->
+    <div id="dashboard-section" class="portal-section">
+      <div class="dashboard-header">
+        <h2>Willkommen, <span id="athlete-name"></span>!</h2>
+      </div>
+      <div class="dashboard-grid">
+
+        <!-- Letzte Ergebnisse (Mini-Tabelle) -->
+        <div class="dashboard-card" onclick="showSection('results')">
+          <h3>Letzte Ergebnisse</h3>
+          <table class="dashboard-table" id="dashboard-results-table">
+            <thead>
+              <tr>
+                <th>Datum</th>
+                <th>Wettkampf</th>
+                <th>Wert</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          <div class="dashboard-link">Mehr anzeigen &rarr;</div>
+        </div>
+
+        <!-- Mini-Leistungskurve -->
+        <div class="dashboard-card" onclick="showSection('stats')">
+          <h3>Leistungskurve</h3>
+          <div id="dashboard-average" class="dashboard-average"></div>
+          <canvas id="dashboard-chart" height="100"></canvas>
+          <div class="dashboard-link">Statistik öffnen &rarr;</div>
+        </div>
+
+        <!-- Profil-Kachel -->
+        <div class="dashboard-card" onclick="showSection('profile')">
+          <h3>Profil</h3>
+          <div id="dashboard-profile" class="dashboard-profile"></div>
+          <div class="dashboard-link">Profil anzeigen &rarr;</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Ergebnisse-Bereich -->
+    <div id="results-section" class="portal-section" style="display:none;">
+      <h2>Ergebnisse</h2>
+      <!-- Ergebnisformular -->
+      <form id="result-form" onsubmit="event.preventDefault(); addResult();">
+        <input type="text" id="datum" placeholder="tt.mm.jjjj">
+
+        <select id="art" required>
+          <option>Training</option>
+          <option>Wettkampf</option>
+        </select>
+        <select id="wettkampf-dropdown" style="display:none;"></select>
+        <input type="number" id="wert" placeholder="Ergebnis (z.B. 595.3)" step="0.01" required>
+        <input type="text" id="kommentar" placeholder="Kommentar">
+        <button type="submit">Speichern</button>
+        <div id="result-message" style="color:green"></div>
+      </form>
+      <!-- Ergebnistabelle -->
+      <table id="results-table">
+        <thead>
+          <tr>
+            <th>Datum</th>
+            <th>Art</th>
+            <th>Wert</th>
+            <th>Kommentar</th>
+            <th>Aktion</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <!-- Statistik-Bereich -->
+    <div id="stats-section" class="portal-section" style="display:none;">
+      <h2>Statistik & Leistungskurve</h2>
+      <canvas id="chart" width="600" height="200"></canvas>
+    </div>
+
+    <!-- Profil-Bereich -->
+    <div id="profile-section" class="portal-section" style="display:none;">
+  <h2>Profil</h2>
+  <div class="profile-card" id="user-profile">
+    
+    <!-- Wird per JS befüllt -->
+  </div>
+</div>
+
+  </div>
+  <script src="main.js"></script>
+</body>
+</html>
