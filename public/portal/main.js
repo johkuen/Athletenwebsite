@@ -156,6 +156,14 @@ function drawChart(results) {
       return avg;
     });
   }
+
+  // Durchschnittswert der roten Linie anzeigen
+const avg = movingAvgArray.length > 0 ? movingAvgArray[movingAvgArray.length - 1] : null;
+const avgDiv = document.getElementById('stats-average');
+if (avgDiv) {
+  avgDiv.textContent = avg !== null ? `Aktueller Durchschnitt: ${avg.toFixed(2)}` : '';
+}
+
   const movingAvgArray = movingAverage(werte, windowSize);
 
   if (window.myChart) window.myChart.destroy();
