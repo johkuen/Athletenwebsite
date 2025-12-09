@@ -473,3 +473,15 @@ function drawChart(results) {
     }
   });
 }
+// Debug-Ausgaben
+  console.log("stats-average div:", document.getElementById('stats-average'));
+  console.log("movingAvgArray:", movingAvgArray);
+
+  // Durchschnittswert der roten Linie anzeigen
+  const avg = movingAvgArray.length > 0 ? movingAvgArray[movingAvgArray.length - 1] : null;
+  console.log("avg:", avg);
+
+  const avgDiv = document.getElementById('stats-average');
+  if (avgDiv) {
+    avgDiv.textContent = avg !== null ? `Aktueller Durchschnitt: ${avg.toFixed(2)}` : '';
+  }
