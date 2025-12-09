@@ -3,13 +3,15 @@ let user = null;
 let wettkaempfe = [];
 let editingResultId = null;
 
-const IMAGE_BASE_URL = "http://localhost:4000";
+// Automatisch richtige Domain wählen (lokal & online)
+const API_BASE_URL = window.location.origin;
+const IMAGE_BASE_URL = window.location.origin;
 
 // Login-Funktion
 async function login() {
   const email = document.getElementById('login-email').value;
   const password = document.getElementById('login-password').value;
-  const res = await fetch('http://localhost:4000/api/login', {
+  const res = await fetch(`${API_BASE_URL}/api/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password })
@@ -62,7 +64,7 @@ function logout() {
 
 // WETTKÄMPFE LADEN (für Dropdown)
 async function loadWettkaempfe() {
-  const res = await fetch('http://localhost:4000/api/wettkaempfe');
+  const res = await fetch(`${API_BASE_URL}/api/wettkaempfe`);
   wettkaempfe = await res.json();
   const dropdown = document.getElementById('wettkampf-dropdown');
   dropdown.innerHTML = '<option value="">Wettkampf auswählen</option>' +
@@ -96,7 +98,7 @@ document.getElementById('art').addEventListener('change', function() {
 // Ergebnisse laden
 async function loadResults() {
   if (!user) return;
-  const res = await fetch(`http://localhost:4000/api/results/${user.id}`);
+  const res = await fetch(`${API_BASE_URL}/api/results/${user.id}`);
   const data = await res.json();
   const tbody = document.querySelector('#results-table tbody');
   if (tbody) {
@@ -138,12 +140,12 @@ async function addResult() {
     return;
   }
 
-  let url = 'http://localhost:4000/api/results';
+  let url = `${API_BASE_URL}/api/results`;
   let method = 'POST';
   let body = { user_id: user.id, datum, art, wert, kommentar, wettkampf };
 
   if (window.editingResultId) {
-    url = `http://localhost:4000/api/results/${window.editingResultId}`;
+    url = `${API_BASE_URL}/api/results/${window.editingResultId}`;
     method = 'PUT';
     body.id = window.editingResultId;
   }
@@ -220,10 +222,28 @@ function drawChart(results) {
   });
 }
 
+// Profil laden (Detailansicht)
+async function loadProfile() {
+  if (!user) return;
+  const res = await fetch(`${API_BASE_URL}/api/user/${user.id}`);
+  const data = await res.json();
+  const bildUrl = data.bild_url ? IMAGE_BASE_URL + data.bild_url : IMAGE_BASE_URL + "/default.jpg";
+  document.getElementById('user-profile').innerHTML = `
+    <img src="${bildUrl}" alt="Profilbild" class="profile-avatar">
+    <div class="profile-name">${data.vorname || ''} ${data.nachname || ''}</div>
+    <div class="profile-status">${data.kaderstatus || 'Kein Status'}</div>
+    <div class="profile-details">
+      <div><span>Geburtsdatum:</span> ${data.geburtsdatum || '-'}</div>
+      <div><span>Wohnort:</span> ${data.wohnort || '-'}</div>
+      <div><span>E-Mail:</span> ${data.email || '-'}</div>
+    </div>
+  `;
+}
+
 // Dashboard: Nur letzte 3 Wettkampfergebnisse mit Wettkampfname
 async function fillDashboardResults() {
   if (!user) return;
-  const res = await fetch(`http://localhost:4000/api/results/${user.id}`);
+  const res = await fetch(`${API_BASE_URL}/api/results/${user.id}`);
   const data = await res.json();
 
   const wettkampfErgebnisse = data
@@ -244,19 +264,16 @@ async function fillDashboardResults() {
 // Dashboard: Mini-Leistungskurve und Durchschnitt
 async function fillDashboardChart() {
   if (!user) return;
-  const res = await fetch(`http://localhost:4000/api/results/${user.id}`);
+  const res = await fetch(`${API_BASE_URL}/api/results/${user.id}`);
   const data = await res.json();
 
   // 1. Nach Datum aufsteigend sortieren (alt → neu)
   const sorted = [...data].sort((a, b) => new Date(a.datum) - new Date(b.datum));
-
-  // 2. Die letzten 5 nehmen (das sind die 5 NEUESTEN, aber immer noch alt→neu)
   const last5 = sorted.slice(-5);
 
-  // Debug-Ausgabe zur Kontrolle
+  // Debug-Ausgabe zur Kontrolle (kann nach Test entfernt werden)
   console.log('DashboardChart last5:', last5.map(r => r.datum), last5.map(r => r.wert));
 
-  // 3. Labels und Werte (jetzt garantiert alt → neu)
   const labels = last5.map(r => r.datum.substr(5,5));
   const werte5 = last5.map(r => parseFloat(r.wert));
 
@@ -285,7 +302,7 @@ async function fillDashboardChart() {
 // Dashboard: Mini-Profil
 async function fillDashboardProfile() {
   if (!user) return;
-  const res = await fetch(`http://localhost:4000/api/user/${user.id}`);
+  const res = await fetch(`${API_BASE_URL}/api/user/${user.id}`);
   const data = await res.json();
   const bildUrl = data.bild_url ? IMAGE_BASE_URL + data.bild_url : IMAGE_BASE_URL + "/default.jpg";
   document.getElementById('dashboard-profile').innerHTML = `
