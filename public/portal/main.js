@@ -129,6 +129,7 @@ function showSection(section) {
 }
 
 // Statistik-Daten laden und Chart zeichnen
+// Statistik-Daten laden und Chart zeichnen
 async function loadStatsChart(userId) {
   const res = await fetch(`${API_BASE_URL}/api/results/${userId}`);
   if (!res.ok) {
@@ -136,9 +137,36 @@ async function loadStatsChart(userId) {
     return;
   }
   const data = await res.json();
-  drawChart(data); // Zeichnet das Chart im Statistikbereich
+  drawChart(data);  // Zeichnet das Chart im <canvas id="chart">
 }
 
+// Chart.js Funktion zum Zeichnen des Diagramms
+function drawChart(results) {
+  const ctx = document.getElementById('chart').getContext('2d');
+  results.sort((a, b) => new Date(a.datum) - new Date(b.datum));
+  const labels = results.map(r => r.datum.substr(0,10));
+  const werte = results.map(r => parseFloat(r.wert));
+
+  if (window.myChart) window.myChart.destroy();
+
+  window.myChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Ergebnis',
+        data: werte,
+        borderColor: 'blue',
+        fill: false,
+        pointRadius: 2
+      }]
+    },
+    options: {
+      plugins: { legend: { display: true } },
+      scales: { y: { beginAtZero: false } }
+    }
+  });
+}
 // Logout-Funktion
 function logout() {
   token = null;
