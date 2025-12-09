@@ -146,8 +146,9 @@ function drawChart(results) {
   results.sort((a, b) => new Date(a.datum) - new Date(b.datum));
   const labels = results.map(r => r.datum.substr(0,10));
   const werte = results.map(r => parseFloat(r.wert));
+  const windowSize = 3;
 
-   // Gleitenden Durchschnitt berechnen
+  // Gleitenden Durchschnitt berechnen
   function movingAverage(arr, windowSize) {
     return arr.map((_, idx, a) => {
       const start = Math.max(0, idx - windowSize + 1);
@@ -157,13 +158,6 @@ function drawChart(results) {
     });
   }
 
-  // Durchschnittswert der roten Linie anzeigen
-const avg = movingAvgArray.length > 0 ? movingAvgArray[movingAvgArray.length - 1] : null;
-const avgDiv = document.getElementById('stats-average');
-if (avgDiv) {
-  avgDiv.textContent = avg !== null ? `Aktueller Durchschnitt: ${avg.toFixed(2)}` : '';
-}
-
   const movingAvgArray = movingAverage(werte, windowSize);
 
   if (window.myChart) window.myChart.destroy();
@@ -172,19 +166,39 @@ if (avgDiv) {
     type: 'line',
     data: {
       labels: labels,
-      datasets: [{
-        label: 'Ergebnis',
-        data: werte,
-        borderColor: 'blue',
-        fill: false,
-        pointRadius: 2
-      }]
+      datasets: [
+        {
+          label: 'Ergebnis',
+          data: werte,
+          borderColor: 'blue',
+          fill: false,
+          pointRadius: 2
+        },
+        {
+          label: `Gleitender Durchschnitt (${windowSize})`,
+          data: movingAvgArray,
+          borderColor: 'rgba(255, 99, 132, 0.5)',
+          borderWidth: 2,
+          borderDash: [5, 5],
+          pointRadius: 0,
+          fill: false
+        }
+      ]
     },
     options: {
-      plugins: { legend: { display: true } },
-      scales: { y: { beginAtZero: false } }
+      plugins: {
+        legend: { display: true }
+      }
     }
   });
+
+  // Durchschnittswert der roten Linie anzeigen
+  const avg = movingAvgArray.length > 0 ? movingAvgArray[movingAvgArray.length - 1] : null;
+  const avgDiv = document.getElementById('stats-average');
+  if (avgDiv) {
+    avgDiv.textContent = avg !== null ? `Aktueller Durchschnitt: ${avg.toFixed(2)}` : '';
+  }
+
 }
 // Logout-Funktion
 function logout() {
