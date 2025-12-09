@@ -70,7 +70,7 @@ async function setPassword() {
     document.getElementById('set-password-error').innerText = data.error || 'Fehler beim Setzen des Passworts';
   }
 }
-window.location.reload();
+
 
 // Umschalten der Portal-Bereiche
 function showSection(section) {
