@@ -7,21 +7,13 @@ let adminSelectedUserId = null; // Für Admin: aktuell gewählter Athlet
 const API_BASE_URL = window.location.origin;
 const IMAGE_BASE_URL = window.location.origin;
 
-// Login-Funktion
-async function login() {
-  const email = document.getElementById('login-email').value;
-  const password = document.getElementById('login-password').value;
-  const res = await fetch(`${API_BASE_URL}/api/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password })
-  });
-  const data = await res.json();
-  if (res.ok) {
-    token = data.token;
-    user = data.user;
+// Direkt nach Variablen hier einfügen:
+window.addEventListener('DOMContentLoaded', () => {
+  token = localStorage.getItem('token');
+  const userString = localStorage.getItem('user');
+  if (token && userString) {
+    user = JSON.parse(userString);
     document.querySelector('.portal-nav').style.display = 'flex';
-    document.getElementById('login-section').style.display = 'none';
 
     if (user.role === 'admin') {
       document.getElementById('admin-section').style.display = 'block';
@@ -33,6 +25,38 @@ async function login() {
       document.getElementById('athlete-name').innerText = `${user.vorname || ''} ${user.nachname || ''}`;
       showSection('dashboard');
     }
+  }
+});
+
+// Login-Funktion
+async function login() {
+  const email = document.getElementById('login-email').value;
+  const password = document.getElementById('login-password').value;
+  const res = await fetch(`${API_BASE_URL}/api/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password })
+  });
+  const data = await res.json();
+  if (res.ok) {
+  token = data.token;
+  user = data.user;
+  localStorage.setItem('token', token);
+  localStorage.setItem('user', JSON.stringify(user));
+  document.querySelector('.portal-nav').style.display = 'flex';
+  document.getElementById('login-section').style.display = 'none';
+
+  if (user.role === 'admin') {
+    document.getElementById('admin-section').style.display = 'block';
+    document.getElementById('portal-wrapper').style.display = 'none';
+    loadAthleten();
+  } else {
+    document.getElementById('portal-wrapper').style.display = 'block';
+    document.getElementById('admin-section').style.display = 'none';
+    document.getElementById('athlete-name').innerText = `${user.vorname || ''} ${user.nachname || ''}`;
+    showSection('dashboard');
+  }
+
   } else if (data.setPassword) {
     showSetPasswordForm(email);
   } else {
@@ -97,11 +121,22 @@ function showSection(section) {
     loadResultsForUser(currentUserId);
   }
   if (section === 'stats') {
-    loadResultsForUser(currentUserId);
+    loadStatsChart(currentUserId);
   }
   if (section === 'profile') {
     loadProfile(currentUserId);
   }
+}
+
+// Statistik-Daten laden und Chart zeichnen
+async function loadStatsChart(userId) {
+  const res = await fetch(`${API_BASE_URL}/api/results/${userId}`);
+  if (!res.ok) {
+    console.error('Fehler beim Laden der Statistikdaten');
+    return;
+  }
+  const data = await res.json();
+  drawChart(data); // Zeichnet das Chart im Statistikbereich
 }
 
 // Logout-Funktion
@@ -109,12 +144,13 @@ function logout() {
   token = null;
   user = null;
   adminSelectedUserId = null;
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
   document.querySelector('.portal-nav').style.display = 'none';
   document.getElementById('portal-wrapper').style.display = 'none';
   document.getElementById('admin-section').style.display = 'none';
   document.getElementById('login-section').style.display = 'flex';
 }
-
 // Admin: Alle Athleten laden und Tabelle füllen
 async function loadAthleten() {
   const res = await fetch(`${API_BASE_URL}/api/athleten`);
