@@ -142,6 +142,7 @@ async function loadStatsChart(userId) {
 
 // Chart.js Funktion zum Zeichnen des Diagramms
 function drawChart(results) {
+  console.log("drawChart wurde aufgerufen!");
   const ctx = document.getElementById('chart').getContext('2d');
   results.sort((a, b) => new Date(a.datum) - new Date(b.datum));
   const labels = results.map(r => r.datum.substr(0,10));
@@ -200,7 +201,7 @@ function drawChart(results) {
   const avg = movingAvgArray.length > 0 ? movingAvgArray[movingAvgArray.length - 1] : null;
 
   console.log("avg:", avg);
-  
+
   const avgDiv = document.getElementById('stats-average');
   if (avgDiv) {
     avgDiv.textContent = avg !== null ? `Aktueller Durchschnitt: ${avg.toFixed(2)}` : '';
