@@ -11,7 +11,7 @@ const IMAGE_BASE_URL = window.location.origin;
 async function login() {
   const email = document.getElementById('login-email').value;
   const password = document.getElementById('login-password').value;
-  const res = await fetch(`\${API_BASE_URL}/api/login`, {
+  const res = await fetch(`${API_BASE_URL}/api/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password })
@@ -30,11 +30,8 @@ async function login() {
     } else {
       document.getElementById('portal-wrapper').style.display = 'block';
       document.getElementById('admin-section').style.display = 'none';
-      document.getElementById('athlete-name').innerText = (user.vorname || '') + ' ' + (user.nachname || '');
+      document.getElementById('athlete-name').innerText = `${user.vorname || ''} ${user.nachname || ''}`;
       showSection('dashboard');
-      fillDashboardResults();
-      fillDashboardChart();
-      fillDashboardProfile();
     }
   } else if (data.setPassword) {
     showSetPasswordForm(email);
@@ -64,7 +61,7 @@ async function setPassword() {
     document.getElementById('set-password-error').innerText = 'Passwörter stimmen nicht überein!';
     return;
   }
-  const res = await fetch(`\${API_BASE_URL}/api/set-password`, {
+  const res = await fetch(`${API_BASE_URL}/api/set-password`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password })
@@ -82,44 +79,28 @@ async function setPassword() {
 // Umschalten der Portal-Bereiche
 function showSection(section) {
   document.querySelectorAll('.portal-section').forEach(s => s.style.display = 'none');
-  document.getElementById(section + '-section').style.display = 'block';
+  document.getElementById(`${section}-section`).style.display = 'block';
 
   document.querySelectorAll('.portal-nav button').forEach(btn => btn.classList.remove('active'));
   const navBtn = Array.from(document.querySelectorAll('.portal-nav button'))
     .find(btn => btn.onclick && btn.onclick.toString().includes(section));
   if (navBtn) navBtn.classList.add('active');
 
+  const currentUserId = (user.role === 'admin' && adminSelectedUserId) ? adminSelectedUserId : user.id;
+
   if (section === 'dashboard') {
-    if (user.role === 'admin' && adminSelectedUserId) {
-      fillDashboardResultsForUser(adminSelectedUserId);
-      fillDashboardChartForUser(adminSelectedUserId);
-      fillDashboardProfileForUser(adminSelectedUserId);
-    } else {
-      fillDashboardResults();
-      fillDashboardChart();
-      fillDashboardProfile();
-    }
+    fillDashboardResults(currentUserId);
+    fillDashboardChart(currentUserId);
+    fillDashboardProfile(currentUserId);
   }
   if (section === 'results') {
-    if (user.role === 'admin' && adminSelectedUserId) {
-      loadResultsForUser(adminSelectedUserId);
-    } else {
-      loadResults();
-    }
+    loadResultsForUser(currentUserId);
   }
   if (section === 'stats') {
-    if (user.role === 'admin' && adminSelectedUserId) {
-      loadResultsForUser(adminSelectedUserId);
-    } else {
-      loadResults();
-    }
+    loadResultsForUser(currentUserId);
   }
   if (section === 'profile') {
-    if (user.role === 'admin' && adminSelectedUserId) {
-      loadProfileForUser(adminSelectedUserId);
-    } else {
-      loadProfile();
-    }
+    loadProfile(currentUserId);
   }
 }
 
@@ -136,7 +117,7 @@ function logout() {
 
 // Admin: Alle Athleten laden und Tabelle füllen
 async function loadAthleten() {
-  const res = await fetch(`\${API_BASE_URL}/api/athleten`);
+  const res = await fetch(`${API_BASE_URL}/api/athleten`);
   if (!res.ok) {
     console.error('Fehler beim Laden der Athleten');
     return;
@@ -165,11 +146,11 @@ function showAthletErgebnisse(athletId, vorname, nachname) {
   adminSelectedUserId = athletId;
   document.getElementById('admin-section').style.display = 'none';
   document.getElementById('portal-wrapper').style.display = 'block';
-  document.getElementById('athlete-name').innerText = vorname + ' ' + nachname + ' (Admin-Ansicht)';
+  document.getElementById('athlete-name').innerText = `${vorname} ${nachname} (Admin-Ansicht)`;
   showSection('results');
 }
 
-// Ergebnisse laden für beliebigen User (Admin)
+// Ergebnisse laden für beliebigen User
 async function loadResultsForUser(userId) {
   const res = await fetch(`${API_BASE_URL}/api/results/${userId}`);
   if (!res.ok) {
@@ -357,11 +338,11 @@ function drawChart(results) {
   });
 }
 
-// Profil laden für eingeloggten User
-async function loadProfile() {
+// Profil laden (für eingeloggten User oder ausgewählten Admin-Athleten)
+async function loadProfile(userId) {
   if (!user) return;
-  const userId = (user.role === 'admin' && adminSelectedUserId) ? adminSelectedUserId : user.id;
-  const res = await fetch(`${API_BASE_URL}/api/user/${userId}`);
+  const idToLoad = userId || user.id;
+  const res = await fetch(`${API_BASE_URL}/api/user/${idToLoad}`);
   const data = await res.json();
   const bildUrl = data.bild_url ? IMAGE_BASE_URL + data.bild_url : IMAGE_BASE_URL + "/default.jpg";
   document.getElementById('user-profile').innerHTML = `
@@ -377,10 +358,10 @@ async function loadProfile() {
 }
 
 // Dashboard: letzte 3 Wettkampfergebnisse mit Wettkampfname
-async function fillDashboardResults() {
+async function fillDashboardResults(userId) {
   if (!user) return;
-  const userId = (user.role === 'admin' && adminSelectedUserId) ? adminSelectedUserId : user.id;
-  const res = await fetch(`${API_BASE_URL}/api/results/${userId}`);
+  const idToLoad = userId || user.id;
+  const res = await fetch(`${API_BASE_URL}/api/results/${idToLoad}`);
   const data = await res.json();
 
   const wettkampfErgebnisse = data
@@ -399,10 +380,10 @@ async function fillDashboardResults() {
 }
 
 // Dashboard: Mini-Leistungskurve und Durchschnitt
-async function fillDashboardChart() {
+async function fillDashboardChart(userId) {
   if (!user) return;
-  const userId = (user.role === 'admin' && adminSelectedUserId) ? adminSelectedUserId : user.id;
-  const res = await fetch(`${API_BASE_URL}/api/results/${userId}`);
+  const idToLoad = userId || user.id;
+  const res = await fetch(`${API_BASE_URL}/api/results/${idToLoad}`);
   const data = await res.json();
 
   const sorted = [...data].sort((a, b) => new Date(a.datum) - new Date(b.datum));
@@ -434,8 +415,10 @@ async function fillDashboardChart() {
 }
 
 // Dashboard: Mini-Profil
-async function fillDashboardProfileForUser(userId) {
-  const res = await fetch(`${API_BASE_URL}/api/user/${userId}`);
+async function fillDashboardProfile(userId) {
+  if (!user) return;
+  const idToLoad = userId || user.id;
+  const res = await fetch(`${API_BASE_URL}/api/user/${idToLoad}`);
   const data = await res.json();
   const bildUrl = data.bild_url ? IMAGE_BASE_URL + data.bild_url : IMAGE_BASE_URL + "/default.jpg";
   document.getElementById('dashboard-profile').innerHTML = `
