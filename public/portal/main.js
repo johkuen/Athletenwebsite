@@ -140,74 +140,6 @@ async function loadStatsChart(userId) {
   drawChart(data);  // Zeichnet das Chart im <canvas id="chart">
 }
 
-// Chart.js Funktion zum Zeichnen des Diagramms
-function drawChart(results) {
-  console.log("drawChart wurde aufgerufen!");
-  const ctx = document.getElementById('chart').getContext('2d');
-  results.sort((a, b) => new Date(a.datum) - new Date(b.datum));
-  const labels = results.map(r => r.datum.substr(0,10));
-  const werte = results.map(r => parseFloat(r.wert));
-  const windowSize = 3;
-
-  // Gleitenden Durchschnitt berechnen
-  function movingAverage(arr, windowSize) {
-    return arr.map((_, idx, a) => {
-      const start = Math.max(0, idx - windowSize + 1);
-      const window = a.slice(start, idx + 1);
-      const avg = window.reduce((sum, v) => sum + v, 0) / window.length;
-      return avg;
-    });
-  }
-
-  const movingAvgArray = movingAverage(werte, windowSize);
-
-  if (window.myChart) window.myChart.destroy();
-
-  window.myChart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: labels,
-      datasets: [
-        {
-          label: 'Ergebnis',
-          data: werte,
-          borderColor: 'blue',
-          fill: false,
-          pointRadius: 2
-        },
-        {
-          label: `Gleitender Durchschnitt (${windowSize})`,
-          data: movingAvgArray,
-          borderColor: 'rgba(255, 99, 132, 0.5)',
-          borderWidth: 2,
-          borderDash: [5, 5],
-          pointRadius: 0,
-          fill: false
-        }
-      ]
-    },
-    options: {
-      plugins: {
-        legend: { display: true }
-      }
-    }
-  });
-
-  // Debug-Ausgaben
-  console.log("stats-average div:", document.getElementById('stats-average'));
-  console.log("movingAvgArray:", movingAvgArray);
-
-  // Durchschnittswert der roten Linie anzeigen
-  const avg = movingAvgArray.length > 0 ? movingAvgArray[movingAvgArray.length - 1] : null;
-
-  console.log("avg:", avg);
-
-  const avgDiv = document.getElementById('stats-average');
-  if (avgDiv) {
-    avgDiv.textContent = avg !== null ? `Aktueller Durchschnitt: ${avg.toFixed(2)}` : '';
-  }
-
-}
 // Logout-Funktion
 function logout() {
   token = null;
@@ -331,7 +263,6 @@ async function loadResults() {
       tbody.appendChild(tr);
     });
   }
-  if (document.getElementById('chart')) drawChart(data);
 }
 
 // Ergebnis speichern/bearbeiten (funktioniert für beide Modi)
@@ -394,53 +325,6 @@ async function addResult() {
   } else {
     document.getElementById('result-message').innerText = data.error || 'Fehler beim Speichern';
   }
-}
-
-// Chart.js Leistungskurve (Detailansicht)
-function drawChart(results) {
-  const ctx = document.getElementById('chart').getContext('2d');
-  results.sort((a, b) => new Date(a.datum) - new Date(b.datum));
-  const labels = results.map(r => r.datum.substr(0,10));
-  const werte = results.map(r => parseFloat(r.wert));
-  const windowSize = 3;
-  function movingAverage(arr, windowSize) {
-    return arr.map((_, idx, a) => {
-      const start = Math.max(0, idx - windowSize + 1);
-      const window = a.slice(start, idx + 1);
-      const avg = window.reduce((sum, v) => sum + v, 0) / window.length;
-      return avg;
-    });
-  }
-  const movingAvgArray = movingAverage(werte, windowSize);
-  if (window.myChart) window.myChart.destroy();
-  window.myChart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: labels,
-      datasets: [
-        {
-          label: 'Ergebnis',
-          data: werte,
-          borderColor: 'blue',
-          fill: false
-        },
-        {
-          label: `Gleitender Durchschnitt (${windowSize})`,
-          data: movingAvgArray,
-          borderColor: 'rgba(255, 99, 132, 0.5)',
-          borderWidth: 2,
-          borderDash: [5, 5],
-          pointRadius: 0,
-          fill: false
-        }
-      ]
-    },
-    options: {
-      plugins: {
-        legend: { display: true }
-      }
-    }
-  });
 }
 
 // Profil laden (für eingeloggten User oder ausgewählten Admin-Athleten)
@@ -531,4 +415,61 @@ async function fillDashboardProfile(userId) {
     <div><b>${data.vorname || ''} ${data.nachname || ''}</b></div>
     <div style="font-size:0.95em;">${data.kaderstatus || ''}</div>
   `;
+}
+
+// Chart.js Leistungskurve (Statistik-Seite)
+function drawChart(results) {
+  console.log("drawChart wurde aufgerufen!");
+  const ctx = document.getElementById('chart').getContext('2d');
+  results.sort((a, b) => new Date(a.datum) - new Date(b.datum));
+  const labels = results.map(r => r.datum.substr(0, 10));
+  const werte = results.map(r => parseFloat(r.wert));
+  const windowSize = 3;
+
+  function movingAverage(arr, windowSize) {
+    return arr.map((_, idx, a) => {
+      const start = Math.max(0, idx - windowSize + 1);
+      const window = a.slice(start, idx + 1);
+      const avg = window.reduce((sum, v) => sum + v, 0) / window.length;
+      return avg;
+    });
+  }
+
+  const movingAvgArray = movingAverage(werte, windowSize);
+  console.log("movingAvgArray:", movingAvgArray);
+
+  if (window.myChart) window.myChart.destroy();
+
+  window.myChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Ergebnis',
+          data: werte,
+          borderColor: 'blue',
+          fill: false,
+          pointRadius: 2
+        },
+        {
+          label: `Gleitender Durchschnitt (${windowSize})`,
+          data: movingAvgArray,
+          borderColor: 'rgba(255, 99, 132, 0.5)',
+          borderWidth: 2,
+          borderDash: [5, 5],
+          pointRadius: 0,
+          fill: false
+        }
+      ]
+    },
+    options: {
+      plugins: {
+        legend: { display: true }
+      },
+      scales: {
+        y: { beginAtZero: false }
+      }
+    }
+  });
 }
