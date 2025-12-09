@@ -419,10 +419,9 @@ async function fillDashboardProfile(userId) {
 
 // Chart.js Leistungskurve (Statistik-Seite)
 function drawChart(results) {
-  console.log("drawChart wurde aufgerufen!");
   const ctx = document.getElementById('chart').getContext('2d');
   results.sort((a, b) => new Date(a.datum) - new Date(b.datum));
-  const labels = results.map(r => r.datum.substr(0, 10));
+  const labels = results.map(r => r.datum.substr(0,10));
   const werte = results.map(r => parseFloat(r.wert));
   const windowSize = 3;
 
@@ -436,7 +435,6 @@ function drawChart(results) {
   }
 
   const movingAvgArray = movingAverage(werte, windowSize);
-  console.log("movingAvgArray:", movingAvgArray);
 
   if (window.myChart) window.myChart.destroy();
 
@@ -466,23 +464,16 @@ function drawChart(results) {
     options: {
       plugins: {
         legend: { display: true }
-      },
-      scales: {
-        y: { beginAtZero: false }
       }
     }
   });
 
-  // Debug-Ausgaben
-  console.log("stats-average div:", document.getElementById('stats-average'));
-  console.log("movingAvgArray:", movingAvgArray);
-
-  // Durchschnittswert der roten Linie anzeigen
+  // Durchschnittswert unter dem Chart anzeigen
   const avg = movingAvgArray.length > 0 ? movingAvgArray[movingAvgArray.length - 1] : null;
-  console.log("avg:", avg);
-
   const avgDiv = document.getElementById('stats-average');
   if (avgDiv) {
     avgDiv.textContent = avg !== null ? `Aktueller Durchschnitt: ${avg.toFixed(2)}` : '';
+    // Testausgabe:
+    console.log("Setze stats-average auf:", avgDiv.textContent);
   }
 }
