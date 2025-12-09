@@ -44,9 +44,10 @@ app.post('/api/register', async (req, res) => {
     const bild_url = `/images/${nachname.toLowerCase()}-${vorname.toLowerCase()}_2026.jpg`;
 
     // User anlegen
+     // Hier fügst du die Rolle hinzu:
     await db.query(
-      'INSERT INTO users (vorname, nachname, email, password_hash, bild_url) VALUES ($1, $2, $3, $4, $5)',
-      [vorname, nachname, email, hash, bild_url]
+      'INSERT INTO users (vorname, nachname, email, password_hash, bild_url, role) VALUES ($1, $2, $3, $4, $5, $6)',
+      [vorname, nachname, email, hash, bild_url, 'user']
     );
     res.json({ message: 'Registrierung erfolgreich!' });
   } catch (err) {
@@ -181,6 +182,17 @@ app.get('/api/user/:id', async (req, res) => {
     res.json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ error: 'Fehler beim Abrufen der Userdaten.' });
+  }
+});
+
+// Neue Route: Alle Athleten abrufen (für Admin-Tabelle)
+app.get('/api/athleten', async (req, res) => {
+  try {
+    const result = await db.query('SELECT id, vorname, nachname, bild_url, kaderstatus FROM users ORDER BY nachname, vorname');
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Fehler beim Abrufen der Athleten:', err);
+    res.status(500).json({ error: 'Serverfehler beim Abrufen der Athleten.' });
   }
 });
 

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Athletenportal</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
@@ -22,8 +22,8 @@
       <h2>Anmeldung</h2>
       <form onsubmit="event.preventDefault(); login();">
         <div class="login-fields">
-          <input type="email" id="login-email" placeholder="E-Mail" required>
-          <input type="password" id="login-password" placeholder="Passwort" required>
+          <input type="email" id="login-email" placeholder="E-Mail" required />
+          <input type="password" id="login-password" placeholder="Passwort" required />
         </div>
         <button type="submit">Einloggen</button>
         <div id="login-error" class="login-error"></div>
@@ -34,16 +34,16 @@
     </div>
   </div>
 
-  <!-- Passwort-Setzen-Formular (wird nur angezeigt, wenn kein Passwort vorhanden) -->
+  <!-- Passwort-Setzen-Formular -->
   <div id="set-password-section" class="login-container" style="display:none;">
     <div class="login-title">Passwort vergeben</div>
     <div class="login-box">
       <h2>Neues Passwort vergeben</h2>
       <form onsubmit="event.preventDefault(); setPassword();">
         <div class="login-fields">
-          <input type="email" id="set-password-email" placeholder="E-Mail" readonly>
-          <input type="password" id="set-password-password" placeholder="Neues Passwort" required>
-          <input type="password" id="set-password-password2" placeholder="Passwort wiederholen" required>
+          <input type="email" id="set-password-email" placeholder="E-Mail" readonly />
+          <input type="password" id="set-password-password" placeholder="Neues Passwort" required />
+          <input type="password" id="set-password-password2" placeholder="Passwort wiederholen" required />
         </div>
         <button type="submit">Passwort setzen</button>
         <div id="set-password-error" class="login-error"></div>
@@ -54,7 +54,7 @@
     </div>
   </div>
 
-  <!-- Portal-Navigation (immer ganz oben, unabhängig vom Portal-Inhalt) -->
+  <!-- Portal-Navigation -->
   <nav class="portal-nav" style="display:none;">
     <div class="nav-left">
       <button onclick="showSection('dashboard')" class="active">Dashboard</button>
@@ -67,17 +67,30 @@
     </div>
   </nav>
 
-  <!-- Portal-Bereich (wird erst nach Login sichtbar) -->
-  <div id="portal-wrapper" style="display:none;">
+  <!-- Admin-Bereich: Athleten-Tabelle -->
+  <div id="admin-section" style="display:none; max-width:1100px; margin: 0 auto; padding: 1em;">
+    <h2>Athletenverwaltung</h2>
+    <table id="athleten-table" border="1" style="width:100%; border-collapse: collapse;">
+      <thead>
+        <tr>
+          <th>Bild</th>
+          <th>Vorname</th>
+          <th>Nachname</th>
+          <th>Kaderstatus</th>
+        </tr>
+      </thead>
+      <tbody id="athleten-table-body"></tbody>
+    </table>
+  </div>
 
-    <!-- Dashboard (Startseite nach Login) -->
+  <!-- Portal-Bereich -->
+  <div id="portal-wrapper" style="display:none;">
+    <!-- Dashboard -->
     <div id="dashboard-section" class="portal-section">
       <div class="dashboard-header">
         <h2>Willkommen, <span id="athlete-name"></span>!</h2>
       </div>
       <div class="dashboard-grid">
-
-        <!-- Letzte Ergebnisse (Mini-Tabelle) -->
         <div class="dashboard-card" onclick="showSection('results')">
           <h3>Letzte Ergebnisse</h3>
           <table class="dashboard-table" id="dashboard-results-table">
@@ -92,42 +105,35 @@
           </table>
           <div class="dashboard-link">Mehr anzeigen &rarr;</div>
         </div>
-
-        <!-- Mini-Leistungskurve -->
         <div class="dashboard-card" onclick="showSection('stats')">
           <h3>Leistungskurve</h3>
           <div id="dashboard-average" class="dashboard-average"></div>
           <canvas id="dashboard-chart" height="100"></canvas>
           <div class="dashboard-link">Statistik öffnen &rarr;</div>
         </div>
-
-        <!-- Profil-Kachel -->
         <div class="dashboard-card" onclick="showSection('profile')">
           <h3>Profil</h3>
           <div id="dashboard-profile" class="dashboard-profile"></div>
           <div class="dashboard-link">Profil anzeigen &rarr;</div>
         </div>
-
       </div>
     </div>
 
     <!-- Ergebnisse-Bereich -->
     <div id="results-section" class="portal-section" style="display:none;">
       <h2>Ergebnisse</h2>
-      <!-- Ergebnisformular -->
       <form id="result-form" onsubmit="event.preventDefault(); addResult();">
-        <input type="text" id="datum" placeholder="tt.mm.jjjj">
+        <input type="text" id="datum" placeholder="tt.mm.jjjj" />
         <select id="art" required>
           <option>Training</option>
           <option>Wettkampf</option>
         </select>
         <select id="wettkampf-dropdown" style="display:none;"></select>
-        <input type="number" id="wert" placeholder="Ergebnis (z.B. 595.3)" step="0.01" required>
-        <input type="text" id="kommentar" placeholder="Kommentar">
+        <input type="number" id="wert" placeholder="Ergebnis (z.B. 595.3)" step="0.01" required />
+        <input type="text" id="kommentar" placeholder="Kommentar" />
         <button type="submit">Speichern</button>
         <div id="result-message" style="color:green"></div>
       </form>
-      <!-- Ergebnistabelle -->
       <table id="results-table">
         <thead>
           <tr>
@@ -151,11 +157,10 @@
     <!-- Profil-Bereich -->
     <div id="profile-section" class="portal-section" style="display:none;">
       <h2>Profil</h2>
-      <div class="profile-card" id="user-profile">
-        <!-- Wird per JS befüllt -->
-      </div>
+      <div class="profile-card" id="user-profile"></div>
     </div>
   </div>
+
   <script src="main.js"></script>
 </body>
 </html>

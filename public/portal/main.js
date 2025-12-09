@@ -2,6 +2,7 @@ let token = null;
 let user = null;
 let wettkaempfe = [];
 let editingResultId = null;
+let adminSelectedUserId = null; // Für Admin: aktuell gewählter Athlet
 
 const API_BASE_URL = window.location.origin;
 const IMAGE_BASE_URL = window.location.origin;
@@ -21,14 +22,21 @@ async function login() {
     user = data.user;
     document.querySelector('.portal-nav').style.display = 'flex';
     document.getElementById('login-section').style.display = 'none';
-    document.getElementById('portal-wrapper').style.display = 'block';
-    document.getElementById('athlete-name').innerText = (user.vorname || '') + ' ' + (user.nachname || '');
-    showSection('dashboard');
-    fillDashboardResults();
-    fillDashboardChart();
-    fillDashboardProfile();
+
+    if (user.role === 'admin') {
+      document.getElementById('admin-section').style.display = 'block';
+      document.getElementById('portal-wrapper').style.display = 'none';
+      loadAthleten();
+    } else {
+      document.getElementById('portal-wrapper').style.display = 'block';
+      document.getElementById('admin-section').style.display = 'none';
+      document.getElementById('athlete-name').innerText = (user.vorname || '') + ' ' + (user.nachname || '');
+      showSection('dashboard');
+      fillDashboardResults();
+      fillDashboardChart();
+      fillDashboardProfile();
+    }
   } else if (data.setPassword) {
-    // Passwort muss gesetzt werden
     showSetPasswordForm(email);
   } else {
     document.getElementById('login-error').innerText = data.error || 'Login fehlgeschlagen';
@@ -71,7 +79,6 @@ async function setPassword() {
   }
 }
 
-
 // Umschalten der Portal-Bereiche
 function showSection(section) {
   document.querySelectorAll('.portal-section').forEach(s => s.style.display = 'none');
@@ -87,8 +94,20 @@ function showSection(section) {
     fillDashboardChart();
     fillDashboardProfile();
   }
-  if (section === 'results') loadResults();
-  if (section === 'stats') loadResults();
+  if (section === 'results') {
+    if (user.role === 'admin' && adminSelectedUserId) {
+      loadResultsForUser(adminSelectedUserId);
+    } else {
+      loadResults();
+    }
+  }
+  if (section === 'stats') {
+    if (user.role === 'admin' && adminSelectedUserId) {
+      loadResultsForUser(adminSelectedUserId);
+    } else {
+      loadResults();
+    }
+  }
   if (section === 'profile') loadProfile();
 }
 
@@ -96,9 +115,70 @@ function showSection(section) {
 function logout() {
   token = null;
   user = null;
+  adminSelectedUserId = null;
   document.querySelector('.portal-nav').style.display = 'none';
   document.getElementById('portal-wrapper').style.display = 'none';
+  document.getElementById('admin-section').style.display = 'none';
   document.getElementById('login-section').style.display = 'flex';
+}
+
+// Admin: Alle Athleten laden und Tabelle befüllen
+async function loadAthleten() {
+  const res = await fetch(`${API_BASE_URL}/api/athleten`);
+  if (!res.ok) {
+    console.error('Fehler beim Laden der Athleten');
+    return;
+  }
+  const athleten = await res.json();
+  const tbody = document.getElementById('athleten-table-body');
+  tbody.innerHTML = '';
+  athleten.forEach(a => {
+    const tr = document.createElement('tr');
+    tr.style.cursor = 'pointer';
+    tr.onclick = () => {
+      showAthletErgebnisse(a.id, a.vorname, a.nachname);
+    };
+    tr.innerHTML = `
+      <td><img src="${IMAGE_BASE_URL + (a.bild_url || '/default.jpg')}" alt="Bild" style="width:40px; height:40px; border-radius:50%; object-fit:cover;"></td>
+      <td>${a.vorname}</td>
+      <td>${a.nachname}</td>
+      <td>${a.kaderstatus || '-'}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// Zeigt Ergebnisse eines ausgewählten Athleten (Admin-Flow)
+function showAthletErgebnisse(athletId, vorname, nachname) {
+  adminSelectedUserId = athletId;
+  document.getElementById('admin-section').style.display = 'none';
+  document.getElementById('portal-wrapper').style.display = 'block';
+  // Optional: Name des Athleten irgendwo anzeigen
+  document.getElementById('athlete-name').innerText = vorname + ' ' + nachname + ' (Admin-Ansicht)';
+  showSection('results');
+}
+
+// Ergebnisse laden für beliebigen User (Admin)
+async function loadResultsForUser(userId) {
+  const res = await fetch(`${API_BASE_URL}/api/results/${userId}`);
+  if (!res.ok) {
+    console.error('Fehler beim Laden der Ergebnisse');
+    return;
+  }
+  const data = await res.json();
+  const tbody = document.querySelector('#results-table tbody');
+  tbody.innerHTML = '';
+  data.forEach(r => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${r.datum.substr(0,10)}</td>
+      <td>${r.art}</td>
+      <td>${r.wert}</td>
+      <td>${r.kommentar || ''}</td>
+      <td><button type="button" onclick="editResult('${r.id}')">Bearbeiten</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
 }
 
 // WETTKÄMPFE LADEN (für Dropdown)
@@ -134,7 +214,7 @@ document.getElementById('art').addEventListener('change', function() {
   if (isWettkampf) loadWettkaempfe();
 });
 
-// Ergebnisse laden
+// Ergebnisse laden (Standard: für eingeloggten User)
 async function loadResults() {
   if (!user) return;
   const res = await fetch(`${API_BASE_URL}/api/results/${user.id}`);
@@ -157,7 +237,7 @@ async function loadResults() {
   if (document.getElementById('chart')) drawChart(data);
 }
 
-// Ergebnis speichern/bearbeiten
+// Ergebnis speichern/bearbeiten (funktioniert für beide Modi)
 async function addResult() {
   let datum = document.getElementById('datum').value;
   const art = document.getElementById('art').value;
@@ -181,7 +261,9 @@ async function addResult() {
 
   let url = `${API_BASE_URL}/api/results`;
   let method = 'POST';
-  let body = { user_id: user.id, datum, art, wert, kommentar, wettkampf };
+  // Admin kann für beliebigen User speichern, sonst für sich selbst
+  let saveUserId = user.role === 'admin' && adminSelectedUserId ? adminSelectedUserId : user.id;
+  let body = { user_id: saveUserId, datum, art, wert, kommentar, wettkampf };
 
   if (window.editingResultId) {
     url = `${API_BASE_URL}/api/results/${window.editingResultId}`;
@@ -205,7 +287,11 @@ async function addResult() {
 
   if (res.ok) {
     document.getElementById('result-message').innerText = 'Gespeichert!';
-    loadResults();
+    if (user.role === 'admin' && adminSelectedUserId) {
+      loadResultsForUser(adminSelectedUserId);
+    } else {
+      loadResults();
+    }
     window.editingResultId = null;
     document.getElementById('result-form').reset();
     document.getElementById('wettkampf-dropdown').style.display = 'none';
@@ -309,9 +395,6 @@ async function fillDashboardChart() {
   // 1. Nach Datum aufsteigend sortieren (alt → neu)
   const sorted = [...data].sort((a, b) => new Date(a.datum) - new Date(b.datum));
   const last5 = sorted.slice(-5);
-
-  // Debug-Ausgabe zur Kontrolle (kann nach Test entfernt werden)
-  console.log('DashboardChart last5:', last5.map(r => r.datum), last5.map(r => r.wert));
 
   const labels = last5.map(r => r.datum.substr(5,5));
   const werte5 = last5.map(r => parseFloat(r.wert));
