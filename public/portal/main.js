@@ -434,15 +434,13 @@ async function fillDashboardChart() {
 }
 
 // Dashboard: Mini-Profil
-async function fillDashboardProfile() {
-  if (!user) return;
-  const userId = (user.role === 'admin' && adminSelectedUserId) ? adminSelectedUserId : user.id;
+async function fillDashboardProfileForUser(userId) {
   const res = await fetch(`${API_BASE_URL}/api/user/${userId}`);
   const data = await res.json();
   const bildUrl = data.bild_url ? IMAGE_BASE_URL + data.bild_url : IMAGE_BASE_URL + "/default.jpg";
   document.getElementById('dashboard-profile').innerHTML = `
-    <img src="${bildUrl}" alt="Profilbild" class="profile-avatar">
-    <div class="profile-name">${data.vorname || ''} ${data.nachname || ''}</div>
-    <div class="profile-status">${data.kaderstatus || 'Kein Status'}</div>
+    <img src="${bildUrl}" alt="Profilbild">
+    <div><b>${data.vorname || ''} ${data.nachname || ''}</b></div>
+    <div style="font-size:0.95em;">${data.kaderstatus || ''}</div>
   `;
 }
