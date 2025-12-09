@@ -147,6 +147,17 @@ function drawChart(results) {
   const labels = results.map(r => r.datum.substr(0,10));
   const werte = results.map(r => parseFloat(r.wert));
 
+   // Gleitenden Durchschnitt berechnen
+  function movingAverage(arr, windowSize) {
+    return arr.map((_, idx, a) => {
+      const start = Math.max(0, idx - windowSize + 1);
+      const window = a.slice(start, idx + 1);
+      const avg = window.reduce((sum, v) => sum + v, 0) / window.length;
+      return avg;
+    });
+  }
+  const movingAvgArray = movingAverage(werte, windowSize);
+
   if (window.myChart) window.myChart.destroy();
 
   window.myChart = new Chart(ctx, {
